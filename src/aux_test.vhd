@@ -1,7 +1,7 @@
 ----------------------------------------------------------------------------------
 -- Engineer: Mike Field <hamster@snap.net.nz< 
 -- 
--- Module Name: alingment_detect - Behavioral
+-- Module Name: Aux_test - Behavioral
 --
 -- Description: Testing that the DisplayPort AUX channel works
 --              as I read it should!
@@ -36,27 +36,38 @@ architecture arch of aux_test is
 	signal aux_data : std_logic := '0';
 	signal aux_mode : std_logic := '0';
 	
-	signal data_sr       : std_logic_vector(107 downto 0) := (others => '0');
-	signal mode_sr       : std_logic_vector(107 downto 0) := (others => '0');
-	constant test_data_1 : std_logic_vector(91 downto 0) := x"AAAAAAAA"        -- Sync
+	signal data_sr       : std_logic_vector(127 downto 0) := (others => '0');
+	signal mode_sr       : std_logic_vector(127 downto 0) := (others => '0');
+	constant test_data_1 : std_logic_vector(127 downto 0) := x"55555555"        -- Sync
 	                                                    & x"F0"              -- Start
-	                                                    & "01100110"         -- CMD 0001 - read
+	                                                    & "01100101"         -- CMD 0100 - ????
 	                                                    & "01010101"         -- Addr 19:16 = 0000
 	                                                    & "0101010101010101" -- Addr 15:8  = 00000000	                                                    
 	                                                    & "0110011001010101" -- '0' & I2C address of 0x50
-	                                                    & x"F";              -- Stop
-	constant test_data_2 : std_logic_vector(107 downto 0) := x"AAAAAAAA"        -- Sync
+	                                                    & "0101010101010101" -- Addr 15:8  = 00000000	                                                    
+	                                                    & "0101010101010101" -- Addr 15:8  = 00000000	                                                    
+	                                                    & x"F0";              -- Stop
+	constant test_data_2 : std_logic_vector(111 downto 0) := x"55555555"        -- Sync
                                                            & x"F0"              -- Start
-                                                           & "01100110"         -- CMD 0001    = read
+                                                           & "01100110"         -- CMD 0101    = read
                                                            & "01010101"         -- Addr 19:16  = 0000
                                                            & "0101010101010101" -- Addr 15:8   = 00000000                                                        
                                                            & "0110011001010101" -- '0' & I2C address of 0x50
-                                                           & "0101010101010101" -- Length of 1 = 00000000
-                                                           & x"F";              -- Stop  
+                                                           & "0101010110101010" -- Length of 15 = 00001111
+                                                           & x"F0";              -- Stop  
 
+	signal snoop : std_logic;
 	                                                    
 begin
-    debug_pmod(7 downto 1) <= (others => '0');
+
+process(clk) 
+    begin
+        if rising_edge(clk) then 
+            debug_pmod(7 downto 1) <= (others => '0');
+            debug_pmod(0) <= snoop;
+        end if;
+    end process;
+    
 i_IOBUFDS_0 : IOBUFDS
    generic map (
       DIFF_TERM => FALSE,
@@ -64,7 +75,7 @@ i_IOBUFDS_0 : IOBUFDS
       IOSTANDARD => "DEFAULT",
       SLEW => "SLOW")
    port map (
-      O   => debug_pmod(0),
+      O   => snoop,
       IO  => dp_tx_aux_p,
       IOB => dp_tx_aux_n,
       I   => aux_data,
