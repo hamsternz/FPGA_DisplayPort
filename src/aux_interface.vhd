@@ -36,8 +36,8 @@ entity aux_interface is
        rx_data      : out   std_logic_vector(7 downto 0);
        rx_empty     : out   std_logic;
        ------------------------------
-       busy         : out   std_logic;
-       timeout      : out   std_logic
+       busy         : out   std_logic := '0';
+       timeout      : out   std_logic := '0'
      );
 end aux_interface;
 
@@ -93,7 +93,7 @@ architecture arch of aux_interface is
     signal rx_meta     : std_logic := '0';
     signal rx_raw      : std_logic := '0'; 
     signal rx_finished : std_logic := '0'; 
-
+    signal rx_holdoff  : std_logic_vector(9 downto 0) :=(others => '0');
 begin
     debug_pmod(3 downto 0) <= "000" & snoop;
     
@@ -116,6 +116,11 @@ clk_proc: process(clk)
                 tristate    <= not busy_sr(busy_sr'high);
                 data_sr <= data_sr(data_sr'high-1 downto 0) & '0';
                 busy_sr <= busy_sr(busy_sr'high-1 downto 0) & '0';
+                if tx_state = tx_waiting then 
+                    rx_holdoff <= rx_holdoff(rx_holdoff'high-1 downto 0) & '0';
+                else
+                    rx_holdoff <= (others => '1');
+                end if;
 
                 case tx_state is 
                     when tx_idle    => debug_pmod(7 downto 4) <= x"0";  
@@ -162,18 +167,16 @@ clk_proc: process(clk)
                                     tx_rd_en <= '1';                                  
                                 end if;
                         when tx_stop =>
-                                data_sr <= "1111000000000000";
-                                busy_sr <= "1111111100000000";
-                                tx_state <= tx_flush;
+                                data_sr    <= "1111000000000000";
+                                busy_sr    <= "1111111100000000";
+                                tx_state   <= tx_flush;
                         when tx_flush =>
-                                timeout_count <= (others => '0');
                                 tx_state <= tx_waiting;
                         when others => NULL;
                     end case;
                 end if;
             else
                 bit_counter <= bit_counter + 1;
-                timeout_count <= (others => '0');
             end if;
             
             -- How the RX inidicates that we can send another transaction;
@@ -208,14 +211,19 @@ clk_proc: process(clk)
 			--------------------------
 			-- Manage the timeout
 			--------------------------
-			if state = s_waiting and timeout_count = 39999 then
-			   tx_state      <= tx_idle;
-			   busy          <= '0';
-			   timeout       <= '1';
-			else
-			   timeout       <= '0';
+           timeout       <= '0';
+			if bit_counter = bit_counter_max then 
+	   		  if tx_state = tx_waiting and tx_state = tx_waiting then 
+	   		      if timeout_count = 39999 then
+    			      tx_state      <= tx_idle;
+    			      timeout       <= '1';
+    		      else
+    		          timeout_count <= timeout_count + 1;
+  			      end if;
+  			  else
+  			      timeout_count <= (others => '0');
+			  end if;
 			end if;
-			timeout_count <= timeout_count+1;
 		end if;
 	end process;
 
@@ -253,7 +261,9 @@ rx_proc: process(clK)
                     when rx_waiting =>
                         if rx_buffer = "0101010111110000" then
                             rx_bits <= (others => '0');
-                            rx_state <= rx_receiving_data;
+                            if rx_holdoff(rx_holdoff'high) = '0' then
+                                rx_state <= rx_receiving_data;
+                            end if;
                         end if;
                     when rx_receiving_data =>
                         if rx_bits(rx_bits'high) = '1' then
@@ -261,15 +271,13 @@ rx_proc: process(clK)
                             if rx_buffer(15) = rx_buffer(14) or rx_buffer(13) = rx_buffer(12) or
                                rx_buffer(11) = rx_buffer(10) or rx_buffer( 9) = rx_buffer(8) then
                                 rx_state <= rx_waiting;
-                                if tx_state = tx_waiting then
+                                if rx_holdoff(rx_holdoff'high) = '0' then
                                     rx_finished <= '1';
                                 end if;
                             else
                                 rx_wr_data <= rx_buffer(15) & rx_buffer(13) & rx_buffer(11) & rx_buffer(9)
                                             & rx_buffer( 7) & rx_buffer( 5) & rx_buffer( 3) & rx_buffer(1);
-                                if tx_state = tx_waiting then
-                                    rx_wr_en <= '1';
-                                end if;
+                                rx_wr_en <= '1';
                             end if;
                         end if;
                     when others =>
@@ -284,7 +292,11 @@ rx_proc: process(clK)
             rx_last   <= rx_synced;
             rx_synced <= rx_meta;
             snoop     <= rx_meta;
-            rx_meta <= rx_raw;
+            if rx_raw = '1' then
+                rx_meta <= '1';
+            else
+                rx_meta <= '0';
+            end if;
         end if;
     end process;
 -- Stub off the unused inputs

@@ -58,28 +58,28 @@ process(clk)
 				when x"042" => aux_tx_data <= x"00"; aux_tx_wr_en <= '1';
 				when x"043" => aux_tx_data <= x"0B"; aux_tx_wr_en <= '1';
 
-				-- Write DPCD
+				-- Write DPCD 
            		when x"050" => aux_tx_data <= x"80"; aux_tx_wr_en <= '1';
 				when x"051" => aux_tx_data <= x"06"; aux_tx_wr_en <= '1';
 				when x"052" => aux_tx_data <= x"00"; aux_tx_wr_en <= '1';
 				when x"053" => aux_tx_data <= x"00"; aux_tx_wr_en <= '1';
 				when x"054" => aux_tx_data <= x"02"; aux_tx_wr_en <= '1';
 
-				-- Write DPCD
+				-- Set channel coding (8b/10b)
            		when x"060" => aux_tx_data <= x"80"; aux_tx_wr_en <= '1';
 				when x"061" => aux_tx_data <= x"06"; aux_tx_wr_en <= '1';
 				when x"062" => aux_tx_data <= x"00"; aux_tx_wr_en <= '1';
 				when x"063" => aux_tx_data <= x"00"; aux_tx_wr_en <= '1';
 				when x"064" => aux_tx_data <= x"01"; aux_tx_wr_en <= '1';
 
-				-- Link BW set
+				-- Set link BW
            		when x"070" => aux_tx_data <= x"80"; aux_tx_wr_en <= '1';
 				when x"071" => aux_tx_data <= x"01"; aux_tx_wr_en <= '1';
 				when x"072" => aux_tx_data <= x"00"; aux_tx_wr_en <= '1';
 				when x"073" => aux_tx_data <= x"00"; aux_tx_wr_en <= '1';
 				when x"074" => aux_tx_data <= x"0A"; aux_tx_wr_en <= '1';
 
-				-- Write Link lane count
+				-- Set link count
            		when x"080" => aux_tx_data <= x"80"; aux_tx_wr_en <= '1';
 				when x"081" => aux_tx_data <= x"01"; aux_tx_wr_en <= '1';
 				when x"082" => aux_tx_data <= x"01"; aux_tx_wr_en <= '1';
