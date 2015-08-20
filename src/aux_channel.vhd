@@ -160,7 +160,7 @@ clk_proc: process(clK)
             state <= next_state;
 
             -- Set the address and data enable for the EDID output
-            edid_de   <= '1';
+            edid_de   <= '0';
             edid_addr <= std_logic_vector(edid_addr_i);
             
             if channel_busy = '0' then
@@ -168,7 +168,7 @@ clk_proc: process(clK)
                     when reset =>
                         if pulse_per_second = '1' then     				
                             next_state  <= check_presence;
-                            edid_addr_i <= x"FF";
+                            edid_addr_i <= x"00";
                         end if;
                         
                     when check_presence => 
@@ -187,8 +187,10 @@ clk_proc: process(clK)
                                 next_state <= error;
                             end if;
                             
-                            if rx_byte_count = x"00" and aux_rx_data /= x"00" then  
-                                next_state <= error;
+                            if rx_byte_count = x"00" then 
+                                if aux_rx_data /= x"00" then  
+                                    next_state <= error;
+                                end if;
                             else
                                 edid_addr_i <= edid_addr_i+1;
                                 edid_data   <= aux_rx_data;
@@ -206,8 +208,10 @@ clk_proc: process(clK)
                                 next_state <= error;
                             end if;
 
-                            if rx_byte_count = x"00" and aux_rx_data /= x"00" then  
-                                next_state <= error;
+                            if rx_byte_count = x"00" then 
+                                if aux_rx_data /= x"00" then  
+                                    next_state <= error;
+                                end if;
                             else
                                 edid_addr_i <= edid_addr_i+1;
                                 edid_data   <= aux_rx_data;
@@ -225,8 +229,10 @@ clk_proc: process(clK)
                                 next_state <= error;
                             end if;
                             
-                            if rx_byte_count = x"00" and aux_rx_data /= x"00" then  
-                                next_state <= error;
+                            if rx_byte_count = x"00" then 
+                                if aux_rx_data /= x"00" then  
+                                    next_state <= error;
+                                end if;
                             else
                                 edid_addr_i <= edid_addr_i+1;
                                 edid_data   <= aux_rx_data;
@@ -244,8 +250,10 @@ clk_proc: process(clK)
                                 next_state <= error;
                             end if;
 
-                            if rx_byte_count = x"00" and aux_rx_data /= x"00" then  
-                                next_state <= error;
+                            if rx_byte_count = x"00" then 
+                                if aux_rx_data /= x"00" then  
+                                    next_state <= error;
+                                end if;
                             else
                                 edid_addr_i <= edid_addr_i+1;
                                 edid_data   <= aux_rx_data;
@@ -262,8 +270,10 @@ clk_proc: process(clK)
                                 next_state <= error;
                             end if;
                             
-                            if rx_byte_count = x"00" and aux_rx_data /= x"00" then  
-                                next_state <= error;
+                            if rx_byte_count = x"00" then 
+                                if aux_rx_data /= x"00" then  
+                                    next_state <= error;
+                                end if;
                             else
                                 edid_addr_i <= edid_addr_i+1;
                                 edid_data   <= aux_rx_data;
@@ -280,8 +290,10 @@ clk_proc: process(clK)
                                 next_state <= error;
                             end if;
 
-                            if rx_byte_count = x"00" and aux_rx_data /= x"00" then  
-                                next_state <= error;
+                            if rx_byte_count = x"00" then 
+                                if aux_rx_data /= x"00" then  
+                                    next_state <= error;
+                                end if;
                             else
                                 edid_addr_i <= edid_addr_i+1;
                                 edid_data   <= aux_rx_data;
@@ -298,8 +310,10 @@ clk_proc: process(clK)
                                 next_state <= error;
                             end if;
                     
-                            if rx_byte_count = x"00" and aux_rx_data /= x"00" then  
-                                next_state <= error;
+                            if rx_byte_count = x"00" then 
+                                if aux_rx_data /= x"00" then  
+                                    next_state <= error;
+                                end if;
                             else
                                 edid_addr_i <= edid_addr_i+1;
                                 edid_data   <= aux_rx_data;
@@ -316,8 +330,10 @@ clk_proc: process(clK)
                                 next_state <= error;
                             end if;
 
-                            if rx_byte_count = x"00" and aux_rx_data /= x"00" then  
-                                next_state <= error;
+                            if rx_byte_count = x"00" then 
+                                if aux_rx_data /= x"00" then  
+                                    next_state <= error;
+                                end if;
                             else
                                 edid_addr_i <= edid_addr_i+1;
                                 edid_data   <= aux_rx_data;
