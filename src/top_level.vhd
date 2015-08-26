@@ -37,6 +37,14 @@ entity top_level is
         debug_pmod      : out   std_logic_vector(7 downto 0) := (others => '0');
         switches        : in    std_logic_vector(7 downto 0) := (others => '0');
         leds            : out   std_logic_vector(7 downto 0) := (others => '0');
+
+        ------------------------------
+        refclk0_p       : in  STD_LOGIC;
+        refclk0_n       : in  STD_LOGIC;
+        refclk1_p       : in  STD_LOGIC;
+        refclk1_n       : in  STD_LOGIC;
+        gtptxp          : out std_logic;
+        gtptxn          : out std_logic;    
         ------------------------------
         dp_tx_hp_detect : in    std_logic;
         dp_tx_aux_p     : inout std_logic;
@@ -47,6 +55,27 @@ entity top_level is
 end top_level;
 
 architecture Behavioral of top_level is
+    component Transceiver is
+    Port ( mgmt_clk        : in  STD_LOGIC;
+           powerup_channel : in  STD_LOGIC;
+           tx_running      : out STD_LOGIC;
+
+           refclk0_p       : in  STD_LOGIC;
+           refclk0_n       : in  STD_LOGIC;
+
+           refclk1_p       : in  STD_LOGIC;
+           refclk1_n       : in  STD_LOGIC;
+
+           TXOUTCLK       : out STD_LOGIC;
+           TXOUTCLKFABRIC : out STD_LOGIC;
+           TXOUTCLKPCS    : out STD_LOGIC;
+           
+           TXDATA         : in std_logic_vector(19 downto 0);
+
+           gtptxp         : out std_logic;
+           gtptxn         : out std_logic);
+    end component;
+
     component aux_channel is
 		port ( 
 		   clk             : in    std_logic;
@@ -132,6 +161,24 @@ architecture Behavioral of top_level is
     signal v_sync_len       : std_logic_vector(11 downto 0) := (others => '0');
     signal interlaced       : std_logic := '0';
 
+    
+--    signal PLL0CLK        : STD_LOGIC := '0';
+--    signal gtrefclk0      : STD_LOGIC := '0';
+--    signal PLL1CLK        : STD_LOGIC := '0';
+--    signal gtrefclk1      : STD_LOGIC := '0';
+--    signal gtrxreset      : STD_LOGIC := '0';
+--    signal rxlpmreset     : STD_LOGIC := '0';
+--    signal gttxreset      : STD_LOGIC := '0';
+--    signal txuserrdy      : STD_LOGIC := '0';
+--    signal txpmaresetdone : std_logic := '0';      
+    signal txresetdone    : std_logic := '0';
+    signal txoutclk       : std_logic := '0';
+    signal txoutclkfabric : std_logic := '0';
+    signal txoutclkpcs    : std_logic := '0';
+    signal txusrclk       : std_logic := '0';
+    signal txusrclk2      : std_logic := '0';
+
+    signal tx_running     :  std_logic := '0';
 begin
 process(clk)
     begin
@@ -158,8 +205,9 @@ process(clk)
     end process;
 i_aux_channel: aux_channel port map ( 
 		   clk             => clk,
-		   debug_pmod(0)   => debug_pmod(0),
-		   debug_pmod(7 downto 1) => open,
+--		   debug_pmod(0)   => debug_pmod(0),
+--		   debug_pmod(7 downto 1) => open,
+		   debug_pmod      => open,
 		   ------------------------------
            edid_de         => edid_de,
            edid_addr       => edid_data,
@@ -214,8 +262,32 @@ i_video_generator: video_generator Port map (
             vid_blank        => debug_pmod(1),
             vid_hsync        => debug_pmod(2),
             vid_vsync        => debug_pmod(3));
+
     debug_pmod(4) <= support_RGB444;
     debug_pmod(5) <= support_YCC444;
     debug_pmod(6) <= support_YCC422;
     debug_pmod(7) <= valid;
+
+
+i_tx0: Transceiver Port map ( 
+       mgmt_clk        => clk,
+       powerup_channel => '1',
+       tx_running      => tx_running,
+
+       refclk0_p   => refclk0_p,
+       refclk0_n   => refclk0_n,
+
+       refclk1_p   => refclk1_p,
+       refclk1_n   => refclk1_n,
+
+       txdata     => "11001111110011000000",
+
+       gtptxp         => gtptxp,
+       gtptxn         => gtptxn,
+       
+       txoutclk       => txoutclk,
+       txoutclkfabric => txoutclkfabric,
+       txoutclkpcs    => txoutclkpcs);
+
+    
 end Behavioral;

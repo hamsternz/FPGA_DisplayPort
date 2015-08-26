@@ -2,6 +2,7 @@
 set_property -dict { PACKAGE_PIN R4    IOSTANDARD LVCMOS33 } [get_ports { clk }]; #IO_L13P_T2_MRCC_34 Sch=sysclk
 create_clock -add -name sys_clk_pin -period 10.00 -waveform {0 5} [get_ports clk]
 
+set_property CFGBVS VCCO [current_design]
 
 ##Display Port
 set_property -dict { PACKAGE_PIN AB10  IOSTANDARD LVDS_25  } [get_ports { dp_rx_aux_n }]; #IO_L8N_T1_13 Sch=dp_tx_aux_n
@@ -9,6 +10,13 @@ set_property -dict { PACKAGE_PIN AA9   IOSTANDARD LVDS_25  } [get_ports { dp_rx_
 set_property -dict { PACKAGE_PIN AA11  IOSTANDARD LVDS_25  } [get_ports { dp_tx_aux_n }]; #IO_L9N_T1_DQS_13 Sch=dp_tx_aux_n
 set_property -dict { PACKAGE_PIN AA10  IOSTANDARD LVDS_25  } [get_ports { dp_tx_aux_p }]; #IO_L9P_T1_DQS_13 Sch=dp_tx_aux_p
 set_property -dict { PACKAGE_PIN N15   IOSTANDARD LVCMOS33 } [get_ports { dp_tx_hp_detect }]; #IO_25_14 Sch=dp_tx_hpd
+set_property -dict { PACKAGE_PIN F6  } [get_ports { refclk0_p }];
+set_property -dict { PACKAGE_PIN E6  } [get_ports { refclk0_n }];
+set_property -dict { PACKAGE_PIN F10 } [get_ports { refclk1_p }];
+set_property -dict { PACKAGE_PIN E10 } [get_ports { refclk1_n }];
+set_property -dict { PACKAGE_PIN B4  } [get_ports { gtptxp }];
+set_property -dict { PACKAGE_PIN A4  } [get_ports { gtptxn }];
+
 
 # DEBUG on JA
 set_property -dict { PACKAGE_PIN AB22  IOSTANDARD LVCMOS33 } [get_ports { debug_pmod[0] }]; #IO_L10N_T1_D15_14 Sch=ja[1]
