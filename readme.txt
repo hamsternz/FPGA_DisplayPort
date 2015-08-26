@@ -25,11 +25,11 @@ Source document http://ftp.cis.nctu.edu.tw/csie/Software/X11/private/VeSaSpEcS/V
 	stuff data into fifo
 	Wait for 'response_received' or 'timeout' to be asserted. 	
 
-4. Make state machine to do something useful
+4. Make state machine to do something useful  - DONE
 	Read back EDID? 
 	Check Lane config
 
-5. Bring up the tranceivers as TX.
+5. Bring up the tranceivers as TX. - one of two DONE
 
 6. The oh-so-painful training for the link.
 
