@@ -120,6 +120,17 @@ architecture Behavioral of top_level is
               interlaced       : out std_logic := '0');
     end component;
 
+    component training_and_channel_delay is
+    port (
+        clk            : in  std_logic;
+        channel_delay  : in  std_logic_vector(1 downto 0);
+        send_pattern_1 : in  std_logic;
+        send_pattern_2 : in  std_logic;
+        data_in        : in  std_logic_vector(19 downto 0);
+        data_out       : out std_logic_vector(19 downto 0)
+    );
+    end component;
+
     component video_generator is
     Port (  clk              : in  STD_LOGIC;
             h_visible_len    : in  std_logic_vector(11 downto 0) := (others => '0');
@@ -161,24 +172,20 @@ architecture Behavioral of top_level is
     signal v_sync_len       : std_logic_vector(11 downto 0) := (others => '0');
     signal interlaced       : std_logic := '0';
 
-    
---    signal PLL0CLK        : STD_LOGIC := '0';
---    signal gtrefclk0      : STD_LOGIC := '0';
---    signal PLL1CLK        : STD_LOGIC := '0';
---    signal gtrefclk1      : STD_LOGIC := '0';
---    signal gtrxreset      : STD_LOGIC := '0';
---    signal rxlpmreset     : STD_LOGIC := '0';
---    signal gttxreset      : STD_LOGIC := '0';
---    signal txuserrdy      : STD_LOGIC := '0';
---    signal txpmaresetdone : std_logic := '0';      
-    signal txresetdone    : std_logic := '0';
-    signal txoutclk       : std_logic := '0';
-    signal txoutclkfabric : std_logic := '0';
-    signal txoutclkpcs    : std_logic := '0';
-    signal txusrclk       : std_logic := '0';
-    signal txusrclk2      : std_logic := '0';
+    signal txresetdone      : std_logic := '0';
+    signal txoutclk         : std_logic := '0';
+    signal txoutclkfabric   : std_logic := '0';
+    signal txoutclkpcs      : std_logic := '0';
+    signal txusrclk         : std_logic := '0';
+    signal txusrclk2        : std_logic := '0';
 
-    signal tx_running     :  std_logic := '0';
+    signal tx_running       : std_logic := '0';
+    
+    signal powerup_channel  : std_logic := '0';
+    signal send_pattern_1   : std_logic := '1';
+    signal send_pattern_2   : std_logic := '0';
+    
+    signal data_channel_0   : std_logic_vector(19 downto 0):= (others => '0'); 
 begin
 process(clk)
     begin
@@ -269,25 +276,37 @@ i_video_generator: video_generator Port map (
     debug_pmod(7) <= valid;
 
 
+i_train_channel0: training_and_channel_delay port map (
+        clk            => txoutclkfabric,
+
+        channel_delay  => "00",
+        send_pattern_1 => send_pattern_1,
+        send_pattern_2 => send_pattern_2, 
+        
+        data_in        => x"33333",
+        data_out       => data_channel_0
+    );
+
+
 i_tx0: Transceiver Port map ( 
        mgmt_clk        => clk,
-       powerup_channel => '1',
+       powerup_channel => powerup_channel,
        tx_running      => tx_running,
 
-       refclk0_p   => refclk0_p,
-       refclk0_n   => refclk0_n,
+       refclk0_p       => refclk0_p,
+       refclk0_n       => refclk0_n,
 
-       refclk1_p   => refclk1_p,
-       refclk1_n   => refclk1_n,
+       refclk1_p       => refclk1_p,
+       refclk1_n       => refclk1_n,
 
-       txdata     => "11001111110011000000",
+       txdata          => data_channel_0,
 
-       gtptxp         => gtptxp,
-       gtptxn         => gtptxn,
+       gtptxp          => gtptxp,
+       gtptxn          => gtptxn,
        
-       txoutclk       => txoutclk,
-       txoutclkfabric => txoutclkfabric,
-       txoutclkpcs    => txoutclkpcs);
+       txoutclk        => txoutclk,
+       txoutclkfabric  => txoutclkfabric,
+       txoutclkpcs     => txoutclkpcs);
 
     
 end Behavioral;
