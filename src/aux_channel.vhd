@@ -14,32 +14,47 @@ use IEEE.NUMERIC_STD.ALL;
 
 entity aux_channel is
 		port ( 
-		   clk             : in    std_logic;
-		   debug_pmod      : out   std_logic_vector(7 downto 0);
+		   clk                 : in    std_logic;
+		   debug_pmod          : out   std_logic_vector(7 downto 0);
 		   ------------------------------
-           edid_de         : out   std_logic;
-           edid_addr       : out   std_logic_vector(7 downto 0);
-		   edid_data       : out   std_logic_vector(7 downto 0);
+           edid_de             : out   std_logic;
+           dp_register_de      : out   std_logic;
+           aux_addr            : out   std_logic_vector(7 downto 0);
+		   aux_data            : out   std_logic_vector(7 downto 0);
 		   ------------------------------
-		   dp_tx_hp_detect : in    std_logic;
-           dp_tx_aux_p     : inout std_logic;
-           dp_tx_aux_n     : inout std_logic;
-           dp_rx_aux_p     : inout std_logic;
-           dp_rx_aux_n     : inout std_logic
+		   link_count          : in    std_logic_vector(1 downto 0);
+		   ------------------------------
+		   tx_powerup          : out   std_logic_vector(3 downto 0);
+		   tx_pattern_1        : out   std_logic := '0';
+		   tx_pattern_2        : out   std_logic := '0';
+		   tx_link_established : out   std_logic := '0';
+		   ------------------------------
+		   dp_tx_hp_detect     : in    std_logic;
+           dp_tx_aux_p         : inout std_logic;
+           dp_tx_aux_n         : inout std_logic;
+           dp_rx_aux_p         : inout std_logic;
+           dp_rx_aux_n         : inout std_logic
 		);
 end entity;
 
 architecture arch of aux_channel is
-    type t_state is ( error, reset, check_presence, 
+    type t_state is ( error, reset, check_presence,
+                    -- Gathering Display information 
                     edid_block0, edid_block1, edid_block2, edid_block3,
                     edid_block4, edid_block5, edid_block6, edid_block7,
-                    read_link_count, read_speed, 
-                    set_link_count,set_speed);
+                    -- Gathering display Port information
+                    read_rev, read_registers,
+                    -- Link configuration states 
+                    set_channel_coding, set_speed_270, set_downspread, set_link_count_1, set_link_count_2, set_link_count_4, 
+                    -- Link training 
+                    clock_training,     waiting_for_lock,      testing_for_lock,
+                    alignment_training, waiting_for_alignment, testing_for_alignment,
+                    link_established);
     signal state            : t_state               := reset;
     signal next_state       : t_state               := reset;
     signal pulse_per_second : std_logic             := '0';
 	signal pps_count        : unsigned(26 downto 0) := (9=>'1',others => '0');   
-                            
+    signal count_100us      : unsigned(14 downto 0) := (others => '0');
     component dp_aux_messages is
 	port ( clk          : in  std_logic;
 		   -- Interface to send messages
@@ -85,18 +100,24 @@ architecture arch of aux_channel is
     signal aux_rx_rd_en    : std_logic;
     signal aux_rx_data     : std_logic_vector(7 downto 0);
     signal aux_rx_empty    : std_logic;
+
+    signal link_count_sink : std_logic_vector(7 downto 0);
 	
 	signal channel_busy    : std_logic;
 	signal channel_timeout : std_logic;
 	
 	signal rx_byte_count   : unsigned(7 downto 0) := (others => '0');
-	signal edid_addr_i     : unsigned(7 downto 0)  := (others => '0');
+	signal aux_addr_i          : unsigned(7 downto 0)  := (others => '0');
 	
 	signal just_read_from_rx :std_logic := '0';
+    signal powerup_mask  : std_logic_vector(3 downto 0);
 
 begin
 
-
+    with link_count select powerup_mask <= "0001" when "001",
+                                           "0011" when "010",
+                                           "1111" when "100",
+                                           "0000" when others;
 i_aux_messages: dp_aux_messages port map (
 		   clk             => clk,
 		   -- Interface to send messages
@@ -128,7 +149,7 @@ i_channel: aux_interface port map (
            timeout     => channel_timeout
     );
     aux_rx_rd_en <= (not channel_busy) and (not aux_rx_empty);
- 
+      
 clk_proc: process(clK)
 	begin
 		if rising_edge(clk) then
@@ -137,38 +158,58 @@ clk_proc: process(clK)
                 msg_de <= '0';
             else
                 msg_de <= '1';
+                tx_link_established <= '0';
+                tx_pattern_1        <= '0';
+                tx_pattern_2        <= '0';
+                tx_powerup          <= "0000";
                 rx_byte_count <= (others => '0');
                 case next_state is
-                when reset           => msg <= x"00";
-                when check_presence  => msg <= x"01";
-                when edid_block0     => msg <= x"02";
-                when edid_block1     => msg <= x"02";
-                when edid_block2     => msg <= x"02";
-                when edid_block3     => msg <= x"02";
-                when edid_block4     => msg <= x"02";
-                when edid_block5     => msg <= x"02";
-                when edid_block6     => msg <= x"02";
-                when edid_block7     => msg <= x"02";
-                when read_link_count => msg <= x"03";
-                when read_speed      => msg <= x"04";
-                when set_link_count  => msg <= x"05";
-                when set_speed       => msg <= x"06";
-                when error           => msg <= x"00";
-                when others          => msg <= x"00";
+                    when reset                 => msg <= x"00";
+                    when check_presence        => msg <= x"01";
+                    when edid_block0           => msg <= x"02";
+                    when edid_block1           => msg <= x"02";
+                    when edid_block2           => msg <= x"02";
+                    when edid_block3           => msg <= x"02";
+                    when edid_block4           => msg <= x"02";
+                    when edid_block5           => msg <= x"02";
+                    when edid_block6           => msg <= x"02";
+                    when edid_block7           => msg <= x"02";
+                    when read_rev              => msg <= x"03";
+                    when read_registers        => msg <= x"04";
+                    when set_channel_coding    => msg <= x"06";
+                    when set_speed_270         => msg <= x"07";
+                    when set_downspread        => msg <= x"08";
+                    when set_link_count_1      => msg <= x"09";
+                    when set_link_count_2      => msg <= x"0A";
+                    when set_link_count_4      => msg <= x"0B";
+                    when clock_training        => msg <= x"0C"; tx_powerup <= powerup_mask; tx_pattern_1 <= '1';
+                    when waiting_for_lock      => msg <= x"00"; tx_powerup <= powerup_mask; tx_pattern_1 <= '1';
+                    when testing_for_lock      => msg <= x"0D"; tx_powerup <= powerup_mask; tx_pattern_1 <= '1';
+                    when alignment_training    => msg <= x"0E"; tx_powerup <= powerup_mask; tx_pattern_2 <= '1';
+                    when waiting_for_alignment => msg <= x"0F"; tx_powerup <= powerup_mask; tx_pattern_2 <= '1';
+                    when testing_for_alignment => msg <= x"0F"; tx_powerup <= powerup_mask; tx_pattern_2 <= '1';
+                    when link_established      => msg <= x"00"; tx_powerup <= powerup_mask; tx_link_established <= '1';
+                    when error                 => msg <= x"00";
+                    when others                => msg <= x"00";
                 end case;
             end if;
             state <= next_state;
 
+
+            -- Counter for short pauses (tested by the high bit underflowing to '1'
+            count_100us <= count_100us - 1;
+            
             -- Set the address and data enable for the EDID output
-            edid_de   <= '0';
-            edid_addr <= std_logic_vector(edid_addr_i);
+            edid_de        <= '0';
+            dp_register_de <= '0';
+            aux_addr       <= std_logic_vector(aux_addr_i);
             
             if channel_busy = '0' then
                 case state is
                     when reset =>
                         if pulse_per_second = '1' then     				
                             next_state  <= check_presence;
-                            edid_addr_i <= x"00";
+                            aux_addr_i <= x"00";
                         end if;
                         
                     when check_presence => 
@@ -192,9 +233,9 @@ clk_proc: process(clK)
                                     next_state <= error;
                                 end if;
                             else
-                                edid_addr_i <= edid_addr_i+1;
-                                edid_data   <= aux_rx_data;
-                                edid_de     <= '1';                                
+                                aux_addr_i <= aux_addr_i+1;
+                                aux_data   <= aux_rx_data;
+                                edid_de    <= '1';                                
                                 if rx_byte_count = x"10"then
                                     next_state <= edid_block1;
                                 end if;                                       
@@ -213,8 +254,8 @@ clk_proc: process(clK)
                                     next_state <= error;
                                 end if;
                             else
-                                edid_addr_i <= edid_addr_i+1;
-                                edid_data   <= aux_rx_data;
+                                aux_addr_i <= aux_addr_i+1;
+                                aux_data   <= aux_rx_data;
                                 edid_de     <= '1';                                
                                 if rx_byte_count = x"10" then
                                     next_state <= edid_block2;
@@ -234,9 +275,9 @@ clk_proc: process(clK)
                                     next_state <= error;
                                 end if;
                             else
-                                edid_addr_i <= edid_addr_i+1;
-                                edid_data   <= aux_rx_data;
-                                edid_de     <= '1';                                
+                                aux_addr_i <= aux_addr_i+1;
+                                aux_data   <= aux_rx_data;
+                                edid_de    <= '1';                                
                                 if rx_byte_count = x"10" then
                                     next_state <= edid_block3;
                                 end if;                                       
@@ -255,8 +296,8 @@ clk_proc: process(clK)
                                     next_state <= error;
                                 end if;
                             else
-                                edid_addr_i <= edid_addr_i+1;
-                                edid_data   <= aux_rx_data;
+                                aux_addr_i <= aux_addr_i+1;
+                                aux_data   <= aux_rx_data;
                                 edid_de     <= '1';                                
                                 if rx_byte_count = x"10" then
                                    next_state <= edid_block4;
@@ -275,9 +316,9 @@ clk_proc: process(clK)
                                     next_state <= error;
                                 end if;
                             else
-                                edid_addr_i <= edid_addr_i+1;
-                                edid_data   <= aux_rx_data;
-                                edid_de     <= '1';                                
+                                aux_addr_i <= aux_addr_i+1;
+                                aux_data   <= aux_rx_data;
+                                edid_de    <= '1';                                
                                 if rx_byte_count = x"10" then
                                     next_state <= edid_block5;
                                 end if;                                       
@@ -295,8 +336,8 @@ clk_proc: process(clK)
                                     next_state <= error;
                                 end if;
                             else
-                                edid_addr_i <= edid_addr_i+1;
-                                edid_data   <= aux_rx_data;
+                                aux_addr_i <= aux_addr_i+1;
+                                aux_data   <= aux_rx_data;
                                 edid_de     <= '1';                                
                                 if rx_byte_count = x"10" then
                                     next_state <= edid_block6;
@@ -315,8 +356,8 @@ clk_proc: process(clK)
                                     next_state <= error;
                                 end if;
                             else
-                                edid_addr_i <= edid_addr_i+1;
-                                edid_data   <= aux_rx_data;
+                                aux_addr_i <= aux_addr_i+1;
+                                aux_data   <= aux_rx_data;
                                 edid_de     <= '1';                                
                                 if rx_byte_count = x"10" then
                                     next_state <= edid_block7;
@@ -335,18 +376,178 @@ clk_proc: process(clK)
                                     next_state <= error;
                                 end if;
                             else
-                                edid_addr_i <= edid_addr_i+1;
-                                edid_data   <= aux_rx_data;
+                                aux_addr_i <= aux_addr_i+1;
+                                aux_data   <= aux_rx_data;
                                 edid_de     <= '1';                                
                                 if rx_byte_count = x"10" then
-                                    next_state <= reset;
+                                    next_state <= read_rev;
                                 end if;                                       
                             end if;
                         end if;
-                    when read_link_count =>
-                    when read_speed =>
-                    when set_link_count =>
-                    when set_speed =>
+                    when read_rev =>
+                        if just_read_from_rx = '1' then
+                            -- Is this a short read (expecting 2 bytes)?
+                            if rx_byte_count /= x"01" and aux_rx_empty = '1' then 
+                                next_state <= error;
+                            end if;
+    
+                            if rx_byte_count = x"00" then 
+                                if aux_rx_data /= x"00" then  
+                                    next_state <= error;
+                                end if;
+                            else
+                                aux_addr_i <= aux_addr_i+1;
+                                aux_data   <= aux_rx_data;
+                                dp_register_de     <= '1';                                
+                                if rx_byte_count = x"01" then
+                                    next_state <= read_registers;
+                                end if;                                       
+                            end if;
+                        end if;
+                    when read_registers =>
+                            if just_read_from_rx = '1' then
+                                -- Is this a short read (expecting 2 bytes)?
+                                if rx_byte_count /= x"0C" and aux_rx_empty = '1' then 
+                                    next_state <= error;
+                                end if;
+        
+                                if rx_byte_count = x"00" then 
+                                    if aux_rx_data /= x"00" then  
+                                        next_state <= error;
+                                    end if;
+                                else
+                                    link_count_sink <= aux_rx_data; 
+                                    if rx_byte_count = x"0C" then
+                                        next_state <= set_channel_coding;
+                                        aux_addr_i <= (others => '0');
+                                    end if;                                       
+                                end if;
+                            end if;
+                    when set_channel_coding =>
+                        if just_read_from_rx = '1' then  
+                            if rx_byte_count = x"00" then 
+                                if aux_rx_data = x"00" then
+                                    next_state <= set_speed_270;                        
+                                else
+                                    next_state <= error;
+                                end if;
+                            end if;
+                        end if;
+                    when set_speed_270 =>
+                        if just_read_from_rx = '1' then  
+                            if rx_byte_count = x"00" then 
+                                if aux_rx_data = x"00" then
+                                    next_state <= set_downspread;                        
+                                else
+                                    next_state <= error;
+                                end if;
+                            end if;
+                        end if;
+                        
+                    when set_downspread =>
+                        if just_read_from_rx = '1' then  
+                            if aux_rx_data = x"00" then
+                                if rx_byte_count = x"00" then 
+                                    case link_count is
+                                        when x"01"  => next_state <= set_link_count_1;                        
+                                        when x"02"  => next_state <= set_link_count_2;                        
+                                        when x"04"  => next_state <= set_link_count_4;
+                                        when others => next_state <= error;
+                                    end case;
+                                else
+                                    next_state <= error;
+                                end if;
+                            end if;
+                        end if;
+                    
+                    when set_link_count_1 =>
+                        if just_read_from_rx = '1' then  
+                            if rx_byte_count = x"00" then 
+                                if aux_rx_data = x"00" then
+                                    next_state <= clock_training;                        
+                                else
+                                    next_state <= error;
+                                end if;
+                            end if;
+                        end if;
+
+                    when set_link_count_2 =>
+                        if just_read_from_rx = '1' then  
+                            if rx_byte_count = x"00" then 
+                                if aux_rx_data = x"00" then
+                                    next_state <= clock_training;                        
+                                else
+                                    next_state <= error;
+                                end if;
+                            end if;
+                        end if;
+                            
+                    when set_link_count_4 =>
+                        if just_read_from_rx = '1' then  
+                            if rx_byte_count = x"00" then 
+                                if aux_rx_data = x"00" then
+                                    next_state <= clock_training;                        
+                                else
+                                    next_state <= error;
+                                end if;
+                            end if;
+                        end if;
+                    when clock_training =>
+                        if just_read_from_rx = '1' then  
+                            if rx_byte_count = x"00" then 
+                                if aux_rx_data = x"00" then
+                                    next_state <= waiting_for_lock;
+                                    count_100us <= to_unsigned(9999,15);                        
+                                else
+                                    next_state <= error;
+                                end if;
+                            end if;
+                        end if;
+                    when waiting_for_lock  =>
+                        if count_100us(count_100us'high) = '1' then
+                            next_state <= testing_for_lock;                        
+                        end if;
+
+                    when testing_for_lock =>
+                        if just_read_from_rx = '1' then  
+                            if rx_byte_count /= x"02" and aux_rx_empty = '1' then 
+                                next_state <= error;
+                            end if;
+                            if rx_byte_count = x"02" then 
+                                if aux_rx_data = x"00" then
+                                    next_state <= waiting_for_lock;
+                                    count_100us <= to_unsigned(9999,15);                        
+    --                              next_state <= alignment_training;                        
+                                else
+                                    next_state <= error;
+                                end if;
+                            end if;
+                        end if;
+
+                    when alignment_training =>
+                        if just_read_from_rx = '1' then  
+                            if aux_rx_data = x"00" then
+                                next_state <= waiting_for_alignment;                        
+                                count_100us <= to_unsigned(9999,15);                        
+                            else
+                                next_state <= error;
+                            end if;
+                        end if;
+                    when waiting_for_alignment =>
+                        if count_100us(count_100us'high) = '1' then
+                            next_state <= testing_for_alignment;                        
+                        end if;
+                        
+                    when testing_for_alignment =>
+                        if just_read_from_rx = '1' then  
+                            if aux_rx_data = x"00" then
+                                next_state <= link_established;                        
+                            else
+                                next_state <= error;
+                            end if;
+                        end if;
+                    when link_established =>
+
                     when others =>
                 end case;
             end if;

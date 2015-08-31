@@ -1,6 +1,11 @@
-
-
 ---------------------------------------------------
+--
+---------------------------------------------------
+--
+-- This is set up so the change over from test patters
+-- to data happens seamlessly - e.g. the value for 
+-- on data_in when send_patter_1 and send_pattern_2
+-- are both become zero is guarranteed to be sent
 --
 -- +----+--------------------+--------------------+
 -- |Word| Training pattern 1 | Training pattern 2 |
@@ -35,44 +40,53 @@ end training_and_channel_delay;
 
 architecture arch of training_and_channel_delay is    
     signal state            : std_logic_vector(3 downto 0)  := "0000";
-    -- To implement the per-lane two-word delay
-    signal data_out_0       : std_logic_vector(19 downto 0) := (others => '0');
-    signal data_out_1       : std_logic_vector(19 downto 0) := (others => '0');
-    signal data_out_2       : std_logic_vector(19 downto 0) := (others => '0');
-    signal data_out_3       : std_logic_vector(19 downto 0) := (others => '0');
-    --- Codes used during link training
+    
+    signal hold_at_state_1  : std_logic_vector(9 downto 0) := "1111111111";
     constant CODE_K28_5_NEG : std_logic_vector(9 downto 0) := "0101111100";
     constant CODE_K28_5_POS : std_logic_vector(9 downto 0) := "1010000011";
     constant CODE_D11_6     : std_logic_vector(9 downto 0) := "0110001011";
     constant CODE_D10_2     : std_logic_vector(9 downto 0) := "1010101010";
+
+    type a_delay_line is array (0 to 8) of std_logic_vector(19 downto 0);
+    signal delay_line : a_delay_line := (others => (others => '0'));
+    
+    signal  hold_at_state_1_shift_reg : std_logic_vector(3 downto 0) := (others => '1');
 begin
-    with channel_delay select data_out <= data_out_0 when "00",
-                                          data_out_1 when "01",     
-                                          data_out_2 when "10",     
-                                          data_out_3 when others;   
+    with channel_delay select data_out <= delay_line(5) when "00",
+                                          delay_line(6) when "01",     
+                                          delay_line(7) when "10",     
+                                          delay_line(8) when others;   
                                           
 process(clk)
     begin
         if rising_edge(clk) then
-            data_out_3 <= data_out_2;
-            data_out_2 <= data_out_1;
-            data_out_1 <= data_out_0;
-
+           -- Move the dalay line along 
+           delay_line(1 to 7) <= delay_line(0 to 6);
+           delay_line(0) <= data_in;
+           
+           -- Do we ened to hold at state 1 until valid data has filtered down the delay line?
+           if send_pattern_2 = '1' or send_pattern_1 = '1' then
+               hold_at_state_1_shift_reg <= (others => '1');
+            else
+               hold_at_state_1_shift_reg <= '0' & hold_at_state_1_shift_reg(hold_at_state_1_shift_reg'high downto 1);
+            end if;
+            
+            -- Do we need to overwrite the data in slot 5 with the sync patterns?
             case state is
-                when x"5"   => state <= x"4"; data_out_0 <= CODE_D11_6 & CODE_K28_5_NEG; 
-                when x"4"   => state <= x"3"; data_out_0 <= CODE_D11_6 & CODE_K28_5_POS;
-                when x"3"   => state <= x"2"; data_out_0 <= CODE_D10_2 & CODE_D10_2;
-                when x"2"   => state <= x"1"; data_out_0 <= CODE_D10_2 & CODE_D10_2;                               
-                when x"1"   => state <= x"0"; data_out_0 <= CODE_D10_2 & CODE_D10_2;
+                when x"5"   => state <= x"4"; delay_line(5) <= CODE_D11_6 & CODE_K28_5_NEG; 
+                when x"4"   => state <= x"3"; delay_line(5) <= CODE_D11_6 & CODE_K28_5_POS;
+                when x"3"   => state <= x"2"; delay_line(5) <= CODE_D10_2 & CODE_D10_2;
+                when x"2"   => state <= x"1"; delay_line(5) <= CODE_D10_2 & CODE_D10_2;                               
+                when x"1"   => state <= x"0"; delay_line(5) <= CODE_D10_2 & CODE_D10_2;
                                 if send_pattern_2 = '1' then
                                     state <= x"5";
-                                elsif send_pattern_1 = '1' then
+                                elsif hold_at_state_1_shift_reg(0) = '1' then
                                     state <= x"1";
                                 end if;
-                when others => state <= x"0"; data_out_0 <= data_in;
+                when others => state <= x"0";
                                 if send_pattern_2 = '1' then
                                     state <= x"5";
-                                elsif send_pattern_1 = '1' then
+                                elsif hold_at_state_1_shift_reg(0) = '1' then
                                     state <= x"1";
                                 end if;
              end case;                

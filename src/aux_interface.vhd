@@ -49,9 +49,10 @@ architecture arch of aux_interface is
 	------------------------------------------
 	type t_tx_state is (tx_idle, tx_sync, tx_start, tx_receive_data, tx_stop, tx_flush, tx_waiting);
     signal tx_state : t_tx_state := tx_idle;
-    signal tx_fifo       : a_small_buffer;
-	signal tx_rd_ptr     : unsigned(4 downto 0) := (others => '0');
-	signal tx_wr_ptr     : unsigned(4 downto 0) := (others => '0');
+    signal tx_fifo          : a_small_buffer;
+	signal tx_rd_ptr        : unsigned(4 downto 0) := (others => '0');
+	signal tx_wr_ptr        : unsigned(4 downto 0) := (others => '0');
+	signal tx_wr_ptr_plus_1 : unsigned(4 downto 0) := (others => '0');
 
     signal timeout_count : unsigned(15 downto 0) := (others => '0');
 
@@ -73,10 +74,11 @@ architecture arch of aux_interface is
     signal busy_sr   : std_logic_vector(15 downto 0);
     
 	type t_rx_state is (rx_waiting, rx_receiving_data);
-    signal rx_state    : t_rx_state := rx_waiting;
-    signal rx_fifo       : a_small_buffer;
-    signal rx_wr_ptr     : unsigned(4 downto 0) := (others => '0');
-    signal rx_rd_ptr     : unsigned(4 downto 0) := (others => '0');
+    signal rx_state         : t_rx_state := rx_waiting;
+    signal rx_fifo          : a_small_buffer;
+    signal rx_wr_ptr        : unsigned(4 downto 0) := (others => '0');
+    signal rx_wr_ptr_plus_1 : unsigned(4 downto 0) := (others => '0');
+    signal rx_rd_ptr        : unsigned(4 downto 0) := (others => '0');
 
 
     signal rx_empty_i : std_logic := '0';
@@ -96,11 +98,12 @@ architecture arch of aux_interface is
     signal rx_holdoff  : std_logic_vector(9 downto 0) :=(others => '0');
 begin
     debug_pmod(3 downto 0) <= "000" & snoop;
-    
+    rx_wr_ptr_plus_1 <= rx_wr_ptr+1;
+    tx_wr_ptr_plus_1 <= tx_wr_ptr+1;
     rx_empty_i <= '1' when rx_wr_ptr   = rx_rd_ptr else '0';
-    rx_full    <= '1' when rx_wr_ptr+1 = rx_rd_ptr else '0';
+    rx_full    <= '1' when rx_wr_ptr_plus_1 = rx_rd_ptr else '0';
     tx_empty   <= '1' when tx_wr_ptr   = tx_rd_ptr else '0';
-    tx_full_i  <= '1' when tx_wr_ptr+1 = tx_rd_ptr else '0';
+    tx_full_i  <= '1' when tx_wr_ptr_plus_1 = tx_rd_ptr else '0';
     rx_empty <= rx_empty_i;
     tx_full  <= tx_full_i;
     busy <= '0' when tx_empty = '1' and tx_state = tx_idle else '1';

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wave_config>
+   <wave_state>
+   </wave_state>
+   <db_ref_list>
+      <db_ref path="tb_aux_test_behav.wdb" id="1">
+         <top_modules>
+            <top_module name="tb_aux_test" />
+         </top_modules>
+      </db_ref>
+   </db_ref_list>
+   <WVObjectSize size="9" />
+   <wvobject db_ref_id="1" fp_name="/tb_aux_test/clk" type="logic">
+      <obj_property name="ElementShortName">clk</obj_property>
+      <obj_property name="ObjectShortName">clk</obj_property>
+   </wvobject>
+   <wvobject db_ref_id="1" fp_name="/tb_aux_test/debug" type="logic">
+      <obj_property name="ElementShortName">debug</obj_property>
+      <obj_property name="ObjectShortName">debug</obj_property>
+   </wvobject>
+   <wvobject db_ref_id="1" fp_name="/tb_aux_test/uut/counter" type="array">
+      <obj_property name="ElementShortName">counter[6:0]</obj_property>
+      <obj_property name="ObjectShortName">counter[6:0]</obj_property>
+   </wvobject>
+   <wvobject db_ref_id="1" fp_name="/tb_aux_test/uut/cycle" type="array">
+      <obj_property name="ElementShortName">cycle[10:0]</obj_property>
+      <obj_property name="ObjectShortName">cycle[10:0]</obj_property>
+   </wvobject>
+   <wvobject db_ref_id="1" fp_name="/tb_aux_test/uut/data_sr" type="array">
+      <obj_property name="ElementShortName">data_sr[107:0]</obj_property>
+      <obj_property name="ObjectShortName">data_sr[107:0]</obj_property>
+   </wvobject>
+   <wvobject db_ref_id="1" fp_name="/tb_aux_test/dp_tx_aux_p" type="logic">
+      <obj_property name="ElementShortName">dp_tx_aux_p</obj_property>
+      <obj_property name="ObjectShortName">dp_tx_aux_p</obj_property>
+   </wvobject>
+   <wvobject db_ref_id="1" fp_name="/tb_aux_test/dp_tx_aux_n" type="logic">
+      <obj_property name="ElementShortName">dp_tx_aux_n</obj_property>
+      <obj_property name="ObjectShortName">dp_tx_aux_n</obj_property>
+   </wvobject>
+   <wvobject db_ref_id="1" fp_name="/tb_aux_test/dp_rx_aux_p" type="logic">
+      <obj_property name="ElementShortName">dp_rx_aux_p</obj_property>
+      <obj_property name="ObjectShortName">dp_rx_aux_p</obj_property>
+   </wvobject>
+   <wvobject db_ref_id="1" fp_name="/tb_aux_test/dp_rx_aux_n" type="logic">
+      <obj_property name="ElementShortName">dp_rx_aux_n</obj_property>
+      <obj_property name="ObjectShortName">dp_rx_aux_n</obj_property>
+   </wvobject>
+</wave_config>

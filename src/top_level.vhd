@@ -82,8 +82,16 @@ architecture Behavioral of top_level is
 		   debug_pmod      : out   std_logic_vector(7 downto 0);
 		   ------------------------------
            edid_de         : out   std_logic;
-           edid_addr       : out   std_logic_vector(7 downto 0);
-		   edid_data       : out   std_logic_vector(7 downto 0);
+           dp_register_de  : out   std_logic;
+           aux_addr        : out   std_logic_vector(7 downto 0);
+		   aux_data        : out   std_logic_vector(7 downto 0);
+		   ------------------------------
+           link_count      : in    std_logic_vector(1 downto 0);
+		   ------------------------------
+           tx_powerup          : out   std_logic_vector(3 downto 0);
+           tx_pattern_1        : out   std_logic := '0';
+           tx_pattern_2        : out   std_logic := '0';
+           tx_link_established : out   std_logic := '0';
 		   ------------------------------
 		   dp_tx_hp_detect : in    std_logic;
            dp_tx_aux_p     : inout std_logic;
@@ -120,6 +128,29 @@ architecture Behavioral of top_level is
               interlaced       : out std_logic := '0');
     end component;
 
+    component dp_register_decode is
+       port ( clk         : in std_logic;
+    
+              de          : in std_logic;
+              data        : in std_logic_vector(7 downto 0);
+              addr        : in std_logic_vector(7 downto 0);
+              invalidate  : in std_logic;
+    
+              valid              : out std_logic := '0';
+     
+              revision           : out std_logic_vector(7 downto 0) := (others => '0');
+              link_rate_2_70     : out std_logic := '0';
+              link_rate_1_62     : out std_logic := '0';
+              extended_framing   : out std_logic := '0';
+              link_count         : out std_logic_vector(3 downto 0) := (others => '0');
+              max_downspread     : out std_logic_vector(7 downto 0) := (others => '0');
+              coding_supported   : out std_logic_vector(7 downto 0) := (others => '0');
+              port0_capabilities : out std_logic_vector(15 downto 0) := (others => '0');
+              port1_capabilities : out std_logic_vector(15 downto 0) := (others => '0');
+              norp               : out std_logic_vector(7 downto 0) := (others => '0')
+        );
+    end component;
+
     component training_and_channel_delay is
     port (
         clk            : in  std_logic;
@@ -149,16 +180,20 @@ architecture Behavioral of top_level is
     end component;
 
     signal edid_de          : std_logic;
-    signal edid_data        : std_logic_vector(7 downto 0);
-    signal edid_addr        : std_logic_vector(7 downto 0);
+    signal dp_register_de   : std_logic;
+    signal aux_data         : std_logic_vector(7 downto 0);
+    signal aux_addr         : std_logic_vector(7 downto 0);
     signal invalidate       : std_logic;
     
-    signal valid            : std_logic := '0';
     
     signal support_RGB444   : std_logic := '0';
     signal support_YCC444   : std_logic := '0';
     signal support_YCC422   : std_logic := '0';
     
+    --------------------------------------------
+    -- EDID data
+    ---------------------------------------------
+    signal edid_valid       : std_logic := '0';
     signal pixel_clock_x10k : std_logic_vector(15 downto 0) := (others => '0');
     
     signal h_visible_len    : std_logic_vector(11 downto 0) := (others => '0');
@@ -171,21 +206,41 @@ architecture Behavioral of top_level is
     signal v_front_len      : std_logic_vector(11 downto 0) := (others => '0');
     signal v_sync_len       : std_logic_vector(11 downto 0) := (others => '0');
     signal interlaced       : std_logic := '0';
-
+    --------------------------------------------
+    -- Display port data
+    ---------------------------------------------
+    signal dp_valid              : std_logic := '0';
+    signal dp_revision           : std_logic_vector(7 downto 0) := (others => '0');
+    signal dp_link_rate_2_70     : std_logic := '0';
+    signal dp_link_rate_1_62     : std_logic := '0';
+    signal dp_extended_framing   : std_logic := '0';
+    signal dp_link_count         : std_logic_vector(3 downto 0) := (others => '0');
+    signal dp_max_downspread     : std_logic_vector(7 downto 0) := (others => '0');
+    signal dp_coding_supported   : std_logic_vector(7 downto 0) := (others => '0');
+    signal dp_port0_capabilities : std_logic_vector(15 downto 0) := (others => '0');
+    signal dp_port1_capabilities : std_logic_vector(15 downto 0) := (others => '0');
+    signal dp_norp               : std_logic_vector(7 downto 0) := (others => '0');
+    --------------------------------------------------------------------------
+    signal powerup_channel  : std_logic_vector(3 downto 0) := (others => '0');
+    signal send_pattern_1   : std_logic := '1';
+    signal send_pattern_2   : std_logic := '0';    
+    signal data_channel_0   : std_logic_vector(19 downto 0):= (others => '0');
+    ---------------------------------------------
+    -- Transceiver signals
+    ---------------------------------------------
     signal txresetdone      : std_logic := '0';
     signal txoutclk         : std_logic := '0';
     signal txoutclkfabric   : std_logic := '0';
     signal txoutclkpcs      : std_logic := '0';
     signal txusrclk         : std_logic := '0';
     signal txusrclk2        : std_logic := '0';
-
+    
     signal tx_running       : std_logic := '0';
-    
-    signal powerup_channel  : std_logic := '0';
-    signal send_pattern_1   : std_logic := '1';
-    signal send_pattern_2   : std_logic := '0';
-    
-    signal data_channel_0   : std_logic_vector(19 downto 0):= (others => '0'); 
+    ------------------------------------------------
+    signal tx_link_established : std_logic := '0';
+    ------------------------------------------------
+    signal interface_debug : std_logic_vector(7 downto 0);
+     
 begin
 process(clk)
     begin
@@ -212,13 +267,19 @@ process(clk)
     end process;
 i_aux_channel: aux_channel port map ( 
 		   clk             => clk,
---		   debug_pmod(0)   => debug_pmod(0),
---		   debug_pmod(7 downto 1) => open,
-		   debug_pmod      => open,
+		   debug_pmod      => interface_debug,
 		   ------------------------------
            edid_de         => edid_de,
-           edid_addr       => edid_data,
-		   edid_data       => edid_addr,
+           dp_register_de  => dp_register_de,
+           aux_addr        => aux_data,
+		   aux_data        => aux_addr,
+		   ------------------------------
+		   link_count      => "01",
+		   ------------------------------
+           tx_powerup          => powerup_channel,
+           tx_pattern_1        => send_pattern_1,
+           tx_pattern_2        => send_pattern_2,
+           tx_link_established => tx_link_established,
 		   ------------------------------
 		   dp_tx_hp_detect => dp_tx_hp_detect,
            dp_tx_aux_p     => dp_tx_aux_p,
@@ -226,15 +287,20 @@ i_aux_channel: aux_channel port map (
            dp_rx_aux_p     => dp_rx_aux_p,
            dp_rx_aux_n     => dp_rx_aux_n
 		);
+    debug_pmod(0) <= interface_debug(0);
+    debug_pmod(1) <= '0';
+    debug_pmod(2) <= send_pattern_1;
+    debug_pmod(3) <= send_pattern_2;
+    debug_pmod(7 downto 4) <= powerup_channel;
 
 i_edid_decode: edid_decode port map ( 
            clk              => clk,    
            edid_de          => edid_de,
-           edid_addr        => edid_data,
-           edid_data        => edid_addr,
+           edid_addr        => aux_data,
+           edid_data        => aux_addr,
            invalidate       => '0',
     
-           valid            => valid,
+           valid            => edid_valid,
     
            support_RGB444   => support_RGB444,
            support_YCC444   => support_YCC444,
@@ -253,6 +319,26 @@ i_edid_decode: edid_decode port map (
            v_sync_len       => v_sync_len,
            interlaced       => interlaced);
 
+i_dp_reg_decode: dp_register_decode port map ( 
+            clk                => clk,
+            de                 => dp_register_de,
+            data               => aux_data,
+            addr               => aux_addr,
+            invalidate         => '0',
+            valid              => dp_valid,
+            
+            revision           => dp_revision,
+            link_rate_2_70     => dp_link_rate_2_70,
+            link_rate_1_62     => dp_link_rate_1_62,
+            extended_framing   => dp_extended_framing,
+            link_count         => dp_link_count,
+            max_downspread     => dp_max_downspread,
+            coding_supported   => dp_coding_supported,
+            port0_capabilities => dp_port0_capabilities,
+            port1_capabilities => dp_port1_capabilities,
+            norp               => dp_norp
+       );
+
 i_video_generator: video_generator Port map (
             clk              => clk,    
  
@@ -266,14 +352,14 @@ i_video_generator: video_generator Port map (
             v_front_len      => v_front_len,
             v_sync_len       => v_sync_len,
  
-            vid_blank        => debug_pmod(1),
-            vid_hsync        => debug_pmod(2),
-            vid_vsync        => debug_pmod(3));
+            vid_blank        => open,
+            vid_hsync        => open,
+            vid_vsync        => open);
 
-    debug_pmod(4) <= support_RGB444;
-    debug_pmod(5) <= support_YCC444;
-    debug_pmod(6) <= support_YCC422;
-    debug_pmod(7) <= valid;
+--    debug_pmod(4) <= support_RGB444;
+--    debug_pmod(5) <= support_YCC444;
+--    debug_pmod(6) <= support_YCC422;
+--    debug_pmod(7) <= dp_valid;
 
 
 i_train_channel0: training_and_channel_delay port map (
@@ -290,7 +376,7 @@ i_train_channel0: training_and_channel_delay port map (
 
 i_tx0: Transceiver Port map ( 
        mgmt_clk        => clk,
-       powerup_channel => powerup_channel,
+       powerup_channel => powerup_channel(0),
        tx_running      => tx_running,
 
        refclk0_p       => refclk0_p,
@@ -307,6 +393,5 @@ i_tx0: Transceiver Port map (
        txoutclk        => txoutclk,
        txoutclkfabric  => txoutclkfabric,
        txoutclkpcs     => txoutclkpcs);
-
     
 end Behavioral;

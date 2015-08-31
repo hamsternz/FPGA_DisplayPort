@@ -46,19 +46,19 @@ process(clk)
 				when x"022" => aux_tx_data <= x"50"; aux_tx_wr_en <= '1';
 				when x"023" => aux_tx_data <= x"0F"; aux_tx_wr_en <= '1';
 
-				-- Read DP Sink Count
+				-- Read DP Version
            		when x"030" => aux_tx_data <= x"90"; aux_tx_wr_en <= '1';
 				when x"031" => aux_tx_data <= x"02"; aux_tx_wr_en <= '1';
 				when x"032" => aux_tx_data <= x"00"; aux_tx_wr_en <= '1';
 				when x"033" => aux_tx_data <= x"00"; aux_tx_wr_en <= '1';
 
-				-- Read DP Revision
+				-- Read DP Registers (12 of them)
            		when x"040" => aux_tx_data <= x"90"; aux_tx_wr_en <= '1';
 				when x"041" => aux_tx_data <= x"00"; aux_tx_wr_en <= '1';
 				when x"042" => aux_tx_data <= x"00"; aux_tx_wr_en <= '1';
 				when x"043" => aux_tx_data <= x"0B"; aux_tx_wr_en <= '1';
 
-				-- Write DPCD 
+				-- Write DPCD powerstate D3 
            		when x"050" => aux_tx_data <= x"80"; aux_tx_wr_en <= '1';
 				when x"051" => aux_tx_data <= x"06"; aux_tx_wr_en <= '1';
 				when x"052" => aux_tx_data <= x"00"; aux_tx_wr_en <= '1';
@@ -79,19 +79,59 @@ process(clk)
 				when x"073" => aux_tx_data <= x"00"; aux_tx_wr_en <= '1';
 				when x"074" => aux_tx_data <= x"0A"; aux_tx_wr_en <= '1';
 
-				-- Set link count
+				-- Write Link Downspread
            		when x"080" => aux_tx_data <= x"80"; aux_tx_wr_en <= '1';
 				when x"081" => aux_tx_data <= x"01"; aux_tx_wr_en <= '1';
-				when x"082" => aux_tx_data <= x"01"; aux_tx_wr_en <= '1';
+				when x"082" => aux_tx_data <= x"07"; aux_tx_wr_en <= '1';
 				when x"083" => aux_tx_data <= x"00"; aux_tx_wr_en <= '1';
-				when x"084" => aux_tx_data <= x"84"; aux_tx_wr_en <= '1';
+				when x"084" => aux_tx_data <= x"10"; aux_tx_wr_en <= '1';
 
-				-- Write Link Downspread
+				-- Set link count 1
            		when x"090" => aux_tx_data <= x"80"; aux_tx_wr_en <= '1';
 				when x"091" => aux_tx_data <= x"01"; aux_tx_wr_en <= '1';
-				when x"092" => aux_tx_data <= x"07"; aux_tx_wr_en <= '1';
+				when x"092" => aux_tx_data <= x"01"; aux_tx_wr_en <= '1';
 				when x"093" => aux_tx_data <= x"00"; aux_tx_wr_en <= '1';
-				when x"094" => aux_tx_data <= x"10"; aux_tx_wr_en <= '1';
+				when x"094" => aux_tx_data <= x"81"; aux_tx_wr_en <= '1';
+
+				-- Set link count 2
+           		when x"0A0" => aux_tx_data <= x"80"; aux_tx_wr_en <= '1';
+				when x"0A1" => aux_tx_data <= x"01"; aux_tx_wr_en <= '1';
+				when x"0A2" => aux_tx_data <= x"01"; aux_tx_wr_en <= '1';
+				when x"0A3" => aux_tx_data <= x"00"; aux_tx_wr_en <= '1';
+				when x"0A4" => aux_tx_data <= x"82"; aux_tx_wr_en <= '1';
+
+				-- Set link count 4
+                when x"0B0" => aux_tx_data <= x"80"; aux_tx_wr_en <= '1';
+                when x"0B1" => aux_tx_data <= x"01"; aux_tx_wr_en <= '1';
+                when x"0B2" => aux_tx_data <= x"01"; aux_tx_wr_en <= '1';
+                when x"0B3" => aux_tx_data <= x"00"; aux_tx_wr_en <= '1';
+                when x"0B4" => aux_tx_data <= x"84"; aux_tx_wr_en <= '1';
+
+				-- Set training pattern 1
+                when x"0C0" => aux_tx_data <= x"80"; aux_tx_wr_en <= '1';
+                when x"0C1" => aux_tx_data <= x"01"; aux_tx_wr_en <= '1';
+                when x"0C2" => aux_tx_data <= x"02"; aux_tx_wr_en <= '1';
+                when x"0C3" => aux_tx_data <= x"00"; aux_tx_wr_en <= '1';
+                when x"0C4" => aux_tx_data <= x"01"; aux_tx_wr_en <= '1';
+
+				-- Resd link status for all four lanes 
+                when x"0D0" => aux_tx_data <= x"90"; aux_tx_wr_en <= '1';
+                when x"0D1" => aux_tx_data <= x"02"; aux_tx_wr_en <= '1';
+                when x"0D2" => aux_tx_data <= x"02"; aux_tx_wr_en <= '1';
+                when x"0D3" => aux_tx_data <= x"01"; aux_tx_wr_en <= '1';
+
+				-- Set training pattern 2
+                when x"0E0" => aux_tx_data <= x"80"; aux_tx_wr_en <= '1';
+                when x"0E1" => aux_tx_data <= x"01"; aux_tx_wr_en <= '1';
+                when x"0E2" => aux_tx_data <= x"02"; aux_tx_wr_en <= '1';
+                when x"0E3" => aux_tx_data <= x"00"; aux_tx_wr_en <= '1';
+                when x"0E4" => aux_tx_data <= x"02"; aux_tx_wr_en <= '1';
+
+				-- Resd lane align status for all four lanes 
+                when x"0F0" => aux_tx_data <= x"90"; aux_tx_wr_en <= '1';
+                when x"0F1" => aux_tx_data <= x"02"; aux_tx_wr_en <= '1';
+                when x"0f2" => aux_tx_data <= x"04"; aux_tx_wr_en <= '1';
+                when x"0F3" => aux_tx_data <= x"00"; aux_tx_wr_en <= '1';
 
 				when others => aux_tx_data <= x"00"; aux_tx_wr_en <= '0';
 			end case;
