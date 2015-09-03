@@ -28,6 +28,15 @@ use UNISIM.VComponents.all;
 entity Transceiver is
     Port ( mgmt_clk        : in  STD_LOGIC;
            powerup_channel : in  STD_LOGIC;
+
+           preemp_0p0      : in  STD_LOGIC;
+           preemp_3p5      : in  STD_LOGIC;
+           preemp_6p0      : in  STD_LOGIC;
+           
+           swing_0p4       : in  STD_LOGIC;
+           swing_0p6       : in  STD_LOGIC;
+           swing_0p8       : in  STD_LOGIC;
+
            tx_running      : out STD_LOGIC;
 
            refclk0_p       : in  STD_LOGIC;
@@ -41,7 +50,7 @@ entity Transceiver is
            TXOUTCLKPCS    : out STD_LOGIC;
            
            TXDATA         : in std_logic_vector(19 downto 0);
-
+           
            gtptxp         : out std_logic;
            gtptxn         : out std_logic);
 end transceiver;
@@ -81,6 +90,8 @@ architecture Behavioral of transceiver is
     signal pll0locken     : std_logic;
     signal pll0lock       : std_logic;
     signal resetsel       : std_logic;
+    signal preemp_level   : std_logic_vector(4 downto 0); 
+    signal swing_level    : std_logic_vector(3 downto 0); 
 
     constant PLL0_FBDIV_IN      :   integer := 4;
     constant PLL1_FBDIV_IN      :   integer := 1;
@@ -105,6 +116,14 @@ begin
     TXUSRCLK2      <= tx_out_clk_buffered;
     TXOUTCLK       <= tx_out_clk_buffered;
     
+    preemp_level <= "10100" when preemp_6p0 = '1' else   -- +6.0 db from table 3-30 in UG476
+                    "01101" when preemp_3p5 = '1' else   -- +3.5 db
+                    "00000";                             -- +0.0 db
+
+    swing_level  <= "1000" when swing_0p8 = '1' else     -- 0.8 V  
+                    "0101" when swing_0p6 = '1' else     -- 0.6 V
+                    "0010";                              -- 0.4 V
+
 i_bufg: BUFG PORT MAP (
         i => tx_out_clk,
         o => tx_out_clk_buffered
@@ -761,7 +780,7 @@ gtpe2_i : GTPE2_CHANNEL
         ------------------------ TX Configurable Driver Ports ----------------------
         TXPOSTCURSOR                    =>      "00000",
         TXPOSTCURSORINV                 =>      '0',
-        TXPRECURSOR                     =>      (others => '0'),
+        TXPRECURSOR                     =>      preemp_level,
         TXPRECURSORINV                  =>      '0',
         -------------------- TX Fabric Clock Output Control Ports ------------------
         TXRATEMODE                      =>      '0',
@@ -829,7 +848,7 @@ gtpe2_i : GTPE2_CHANNEL
         GTPTXP                          =>      gtptxp,
         TXBUFDIFFCTRL                   =>      "100",
         TXDEEMPH                        =>      '0',
-        TXDIFFCTRL                      =>      "1000",
+        TXDIFFCTRL                      =>      swing_level,
         TXDIFFPD                        =>      '0',
         TXINHIBIT                       =>      '0',
         TXMAINCURSOR                    =>      "0000000",

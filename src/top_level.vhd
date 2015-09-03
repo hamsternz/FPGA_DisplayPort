@@ -22,15 +22,6 @@
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 
--- Uncomment the following library declaration if using
--- arithmetic functions with Signed or Unsigned values
---use IEEE.NUMERIC_STD.ALL;
-
--- Uncomment the following library declaration if instantiating
--- any Xilinx leaf cells in this code.
---library UNISIM;
---use UNISIM.VComponents.all;
-
 entity top_level is
     port ( 
         clk             : in    std_logic;
@@ -55,10 +46,48 @@ entity top_level is
 end top_level;
 
 architecture Behavioral of top_level is
+    component link_signal_mgmt is
+        Port ( mgmt_clk    : in  STD_LOGIC;
+
+               tx_powerup  : in  STD_LOGIC;  -- Used to reset
+            
+               status_de   : in  std_logic;
+               adjust_de   : in  std_logic;
+               addr        : in  std_logic_vector(7 downto 0);
+	  	       data        : in  std_logic_vector(7 downto 0);
+
+               sink_channel_count   : in  std_logic_vector(2 downto 0);
+               source_channel_count : in  std_logic_vector(2 downto 0);
+               active_channel_count : out std_logic_vector(2 downto 0);
+
+               powerup_channel : out std_logic_vector(3 downto 0);
+
+               clock_adj_done  : out STD_LOGIC;
+               align_adj_done  : out STD_LOGIC;
+        
+               preemp_0p0  : out STD_LOGIC;
+               preemp_3p5  : out STD_LOGIC;
+               preemp_6p0  : out STD_LOGIC;
+        
+               swing_0p4   : out STD_LOGIC;
+               swing_0p6   : out STD_LOGIC;
+               swing_0p8   : out STD_LOGIC);
+    end component;
+    
     component Transceiver is
     Port ( mgmt_clk        : in  STD_LOGIC;
            powerup_channel : in  STD_LOGIC;
+
+           preemp_0p0      : in  STD_LOGIC;
+           preemp_3p5      : in  STD_LOGIC;
+           preemp_6p0      : in  STD_LOGIC;
+           
+           swing_0p4       : in  STD_LOGIC;
+           swing_0p6       : in  STD_LOGIC;
+           swing_0p8       : in  STD_LOGIC;
+
            tx_running      : out STD_LOGIC;
+
 
            refclk0_p       : in  STD_LOGIC;
            refclk0_n       : in  STD_LOGIC;
@@ -78,19 +107,30 @@ architecture Behavioral of top_level is
 
     component aux_channel is
 		port ( 
-		   clk             : in    std_logic;
-		   debug_pmod      : out   std_logic_vector(7 downto 0);
+		   clk                 : in    std_logic;
+		   debug_pmod          : out   std_logic_vector(7 downto 0);
 		   ------------------------------
-           edid_de         : out   std_logic;
-           dp_register_de  : out   std_logic;
-           aux_addr        : out   std_logic_vector(7 downto 0);
-		   aux_data        : out   std_logic_vector(7 downto 0);
+           edid_de             : out   std_logic;
+           dp_reg_de           : out   std_logic;
+           adjust_de           : out   std_logic;
+           status_de           : out   std_logic;
+           aux_addr            : out   std_logic_vector(7 downto 0);
+		   aux_data            : out   std_logic_vector(7 downto 0);
 		   ------------------------------
-           link_count      : in    std_logic_vector(1 downto 0);
+           link_count          : in    std_logic_vector(2 downto 0);
 		   ------------------------------
-           tx_powerup          : out   std_logic_vector(3 downto 0);
-           tx_pattern_1        : out   std_logic := '0';
-           tx_pattern_2        : out   std_logic := '0';
+		   swing_0p4           : in    std_logic;
+           swing_0p6           : in    std_logic;
+           swing_0p8           : in    std_logic;
+           preemp_0p0          : in    STD_LOGIC;
+           preemp_3p5          : in    STD_LOGIC;
+           preemp_6p0          : in    STD_LOGIC;
+           clock_adj_done      : in    STD_LOGIC;
+           align_adj_done      : in    STD_LOGIC;
+		   ------------------------------
+           tx_powerup          : out   std_logic := '0';
+           tx_clock_train      : out   std_logic := '0';
+           tx_align_train      : out   std_logic := '0';
            tx_link_established : out   std_logic := '0';
 		   ------------------------------
 		   dp_tx_hp_detect : in    std_logic;
@@ -100,6 +140,7 @@ architecture Behavioral of top_level is
            dp_rx_aux_n     : inout std_logic
 		);
     end component;
+
     component edid_decode is
        port ( clk              : in std_logic;
     
@@ -155,8 +196,8 @@ architecture Behavioral of top_level is
     port (
         clk            : in  std_logic;
         channel_delay  : in  std_logic_vector(1 downto 0);
-        send_pattern_1 : in  std_logic;
-        send_pattern_2 : in  std_logic;
+        clock_train    : in  std_logic;
+        align_train    : in  std_logic;
         data_in        : in  std_logic_vector(19 downto 0);
         data_out       : out std_logic_vector(19 downto 0)
     );
@@ -180,7 +221,9 @@ architecture Behavioral of top_level is
     end component;
 
     signal edid_de          : std_logic;
-    signal dp_register_de   : std_logic;
+    signal dp_reg_de        : std_logic;
+    signal adjust_de        : std_logic;
+    signal status_de        : std_logic;
     signal aux_data         : std_logic_vector(7 downto 0);
     signal aux_addr         : std_logic_vector(7 downto 0);
     signal invalidate       : std_logic;
@@ -221,9 +264,9 @@ architecture Behavioral of top_level is
     signal dp_port1_capabilities : std_logic_vector(15 downto 0) := (others => '0');
     signal dp_norp               : std_logic_vector(7 downto 0) := (others => '0');
     --------------------------------------------------------------------------
-    signal powerup_channel  : std_logic_vector(3 downto 0) := (others => '0');
-    signal send_pattern_1   : std_logic := '1';
-    signal send_pattern_2   : std_logic := '0';    
+    signal tx_powerup       : std_logic := '0';
+    signal tx_clock_train   : std_logic := '0';
+    signal tx_align_train   : std_logic := '0';    
     signal data_channel_0   : std_logic_vector(19 downto 0):= (others => '0');
     ---------------------------------------------
     -- Transceiver signals
@@ -236,10 +279,26 @@ architecture Behavioral of top_level is
     signal txusrclk2        : std_logic := '0';
     
     signal tx_running       : std_logic := '0';
+
+    signal powerup_channel : std_logic_vector(3 downto 0);
+    signal clock_adj_done  : std_logic := '0';
+    signal align_adj_done  : std_logic := '0';
+    signal preemp_0p0      : std_logic := '1';
+    signal preemp_3p5      : STD_LOGIC := '0';
+    signal preemp_6p0      : STD_LOGIC := '0';
+           
+    signal swing_0p4       : STD_LOGIC := '1';
+    signal swing_0p6       : STD_LOGIC := '0';
+    signal swing_0p8       : STD_LOGIC := '0';
+
     ------------------------------------------------
     signal tx_link_established : std_logic := '0';
     ------------------------------------------------
     signal interface_debug : std_logic_vector(7 downto 0);
+
+    signal sink_channel_count   : std_logic_vector(2 downto 0) := "100";
+    signal source_channel_count : std_logic_vector(2 downto 0) := "010";
+    signal active_channel_count : std_logic_vector(2 downto 0) := "000";
      
 begin
 process(clk)
@@ -270,15 +329,27 @@ i_aux_channel: aux_channel port map (
 		   debug_pmod      => interface_debug,
 		   ------------------------------
            edid_de         => edid_de,
-           dp_register_de  => dp_register_de,
+           dp_reg_de       => dp_reg_de,
+           adjust_de       => adjust_de,
+           status_de       => status_de,
            aux_addr        => aux_data,
 		   aux_data        => aux_addr,
 		   ------------------------------
-		   link_count      => "01",
+		   link_count      => active_channel_count,
+
+           preemp_0p0      => preemp_0p0, 
+           preemp_3p5      => preemp_3p5,
+           preemp_6p0      => preemp_6p0,           
+           swing_0p4       => swing_0p4,
+           swing_0p6       => swing_0p6,
+           swing_0p8       => swing_0p8,
+           clock_adj_done  => clock_adj_done,
+           align_adj_done  => align_adj_done,
+           
 		   ------------------------------
-           tx_powerup          => powerup_channel,
-           tx_pattern_1        => send_pattern_1,
-           tx_pattern_2        => send_pattern_2,
+           tx_powerup          => tx_powerup,
+           tx_clock_train      => tx_clock_train,
+           tx_align_train      => tx_align_train,
            tx_link_established => tx_link_established,
 		   ------------------------------
 		   dp_tx_hp_detect => dp_tx_hp_detect,
@@ -287,11 +358,12 @@ i_aux_channel: aux_channel port map (
            dp_rx_aux_p     => dp_rx_aux_p,
            dp_rx_aux_n     => dp_rx_aux_n
 		);
+
     debug_pmod(0) <= interface_debug(0);
-    debug_pmod(1) <= '0';
-    debug_pmod(2) <= send_pattern_1;
-    debug_pmod(3) <= send_pattern_2;
-    debug_pmod(7 downto 4) <= powerup_channel;
+    debug_pmod(1) <= tx_running;
+    debug_pmod(2) <= tx_clock_train;
+    debug_pmod(3) <= tx_align_train;
+    debug_pmod(7 downto 4) <= tx_powerup & tx_powerup & tx_powerup & tx_powerup;
 
 i_edid_decode: edid_decode port map ( 
            clk              => clk,    
@@ -321,7 +393,7 @@ i_edid_decode: edid_decode port map (
 
 i_dp_reg_decode: dp_register_decode port map ( 
             clk                => clk,
-            de                 => dp_register_de,
+            de                 => dp_reg_de,
             data               => aux_data,
             addr               => aux_addr,
             invalidate         => '0',
@@ -366,18 +438,53 @@ i_train_channel0: training_and_channel_delay port map (
         clk            => txoutclkfabric,
 
         channel_delay  => "00",
-        send_pattern_1 => send_pattern_1,
-        send_pattern_2 => send_pattern_2, 
+        clock_train    => tx_clock_train,
+        align_train    => tx_align_train, 
         
         data_in        => x"33333",
         data_out       => data_channel_0
     );
+
+i_link_signal_mgmt:  link_signal_mgmt Port map (
+        mgmt_clk        => clk,
+
+        tx_powerup      => tx_powerup, 
+        
+        status_de       => status_de,
+        adjust_de       => adjust_de,
+        data            => aux_data,
+        addr            => aux_addr,
+
+        sink_channel_count   => sink_channel_count,
+        source_channel_count => source_channel_count,
+        active_channel_count => active_channel_count,
+
+        powerup_channel => powerup_channel,
+
+        clock_adj_done  => clock_adj_done,
+        align_adj_done  => align_adj_done,
+
+        preemp_0p0      => preemp_0p0, 
+        preemp_3p5      => preemp_3p5,
+        preemp_6p0      => preemp_6p0,
+            
+        swing_0p4       => swing_0p4,
+        swing_0p6       => swing_0p6,
+        swing_0p8       => swing_0p8);
 
 
 i_tx0: Transceiver Port map ( 
        mgmt_clk        => clk,
        powerup_channel => powerup_channel(0),
        tx_running      => tx_running,
+
+       preemp_0p0      => preemp_0p0, 
+       preemp_3p5      => preemp_3p5,
+       preemp_6p0      => preemp_6p0,
+           
+       swing_0p4       => swing_0p4,
+       swing_0p6       => swing_0p6,
+       swing_0p8       => swing_0p8,
 
        refclk0_p       => refclk0_p,
        refclk0_n       => refclk0_n,

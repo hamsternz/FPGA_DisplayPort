@@ -52,7 +52,7 @@ process(clk)
 				when x"032" => aux_tx_data <= x"00"; aux_tx_wr_en <= '1';
 				when x"033" => aux_tx_data <= x"00"; aux_tx_wr_en <= '1';
 
-				-- Read DP Registers (12 of them)
+				-- Read DP configuration registers (12 of them)
            		when x"040" => aux_tx_data <= x"90"; aux_tx_wr_en <= '1';
 				when x"041" => aux_tx_data <= x"00"; aux_tx_wr_en <= '1';
 				when x"042" => aux_tx_data <= x"00"; aux_tx_wr_en <= '1';
@@ -72,7 +72,7 @@ process(clk)
 				when x"063" => aux_tx_data <= x"00"; aux_tx_wr_en <= '1';
 				when x"064" => aux_tx_data <= x"01"; aux_tx_wr_en <= '1';
 
-				-- Set link BW
+				-- Set link bandwidth 2.70 Gb/s
            		when x"070" => aux_tx_data <= x"80"; aux_tx_wr_en <= '1';
 				when x"071" => aux_tx_data <= x"01"; aux_tx_wr_en <= '1';
 				when x"072" => aux_tx_data <= x"00"; aux_tx_wr_en <= '1';
@@ -112,7 +112,7 @@ process(clk)
                 when x"0C1" => aux_tx_data <= x"01"; aux_tx_wr_en <= '1';
                 when x"0C2" => aux_tx_data <= x"02"; aux_tx_wr_en <= '1';
                 when x"0C3" => aux_tx_data <= x"00"; aux_tx_wr_en <= '1';
-                when x"0C4" => aux_tx_data <= x"01"; aux_tx_wr_en <= '1';
+                when x"0C4" => aux_tx_data <= x"21"; aux_tx_wr_en <= '1';
 
 				-- Resd link status for all four lanes 
                 when x"0D0" => aux_tx_data <= x"90"; aux_tx_wr_en <= '1';
@@ -120,19 +120,55 @@ process(clk)
                 when x"0D2" => aux_tx_data <= x"02"; aux_tx_wr_en <= '1';
                 when x"0D3" => aux_tx_data <= x"01"; aux_tx_wr_en <= '1';
 
+                --  Read the Adjust_Request registers
+                when x"0E0" => aux_tx_data <= x"90"; aux_tx_wr_en <= '1';
+                when x"0E1" => aux_tx_data <= x"02"; aux_tx_wr_en <= '1';
+                when x"0E2" => aux_tx_data <= x"06"; aux_tx_wr_en <= '1';
+                when x"0E3" => aux_tx_data <= x"01"; aux_tx_wr_en <= '1';
+                
 				-- Set training pattern 2
-                when x"0E0" => aux_tx_data <= x"80"; aux_tx_wr_en <= '1';
-                when x"0E1" => aux_tx_data <= x"01"; aux_tx_wr_en <= '1';
-                when x"0E2" => aux_tx_data <= x"02"; aux_tx_wr_en <= '1';
-                when x"0E3" => aux_tx_data <= x"00"; aux_tx_wr_en <= '1';
-                when x"0E4" => aux_tx_data <= x"02"; aux_tx_wr_en <= '1';
+                when x"0F0" => aux_tx_data <= x"80"; aux_tx_wr_en <= '1';
+                when x"0F1" => aux_tx_data <= x"01"; aux_tx_wr_en <= '1';
+                when x"0F2" => aux_tx_data <= x"02"; aux_tx_wr_en <= '1';
+                when x"0F3" => aux_tx_data <= x"00"; aux_tx_wr_en <= '1';
+                when x"0F4" => aux_tx_data <= x"02"; aux_tx_wr_en <= '1';
 
 				-- Resd lane align status for all four lanes 
-                when x"0F0" => aux_tx_data <= x"90"; aux_tx_wr_en <= '1';
-                when x"0F1" => aux_tx_data <= x"02"; aux_tx_wr_en <= '1';
-                when x"0f2" => aux_tx_data <= x"04"; aux_tx_wr_en <= '1';
-                when x"0F3" => aux_tx_data <= x"00"; aux_tx_wr_en <= '1';
+                when x"100" => aux_tx_data <= x"90"; aux_tx_wr_en <= '1';
+                when x"101" => aux_tx_data <= x"02"; aux_tx_wr_en <= '1';
+                when x"102" => aux_tx_data <= x"04"; aux_tx_wr_en <= '1';
+                when x"103" => aux_tx_data <= x"00"; aux_tx_wr_en <= '1';
 
+				-- Set Premp level 0, votage 0.4V
+                when x"140" => aux_tx_data <= x"80"; aux_tx_wr_en <= '1';
+                when x"141" => aux_tx_data <= x"01"; aux_tx_wr_en <= '1';
+                when x"142" => aux_tx_data <= x"03"; aux_tx_wr_en <= '1';
+                when x"143" => aux_tx_data <= x"03"; aux_tx_wr_en <= '1';
+                when x"144" => aux_tx_data <= x"00"; aux_tx_wr_en <= '1';
+                when x"145" => aux_tx_data <= x"00"; aux_tx_wr_en <= '1';
+                when x"146" => aux_tx_data <= x"00"; aux_tx_wr_en <= '1';
+                when x"147" => aux_tx_data <= x"00"; aux_tx_wr_en <= '1';
+
+				-- Set Premp level 0, votage 0.6V
+                when x"160" => aux_tx_data <= x"80"; aux_tx_wr_en <= '1';
+                when x"161" => aux_tx_data <= x"01"; aux_tx_wr_en <= '1';
+                when x"162" => aux_tx_data <= x"03"; aux_tx_wr_en <= '1';
+                when x"163" => aux_tx_data <= x"03"; aux_tx_wr_en <= '1';
+                when x"164" => aux_tx_data <= x"01"; aux_tx_wr_en <= '1';
+                when x"165" => aux_tx_data <= x"01"; aux_tx_wr_en <= '1';
+                when x"166" => aux_tx_data <= x"01"; aux_tx_wr_en <= '1';
+                when x"167" => aux_tx_data <= x"01"; aux_tx_wr_en <= '1';
+
+				-- Set Premp level 0, votage 0.8V  -- Max voltage
+                when x"180" => aux_tx_data <= x"80"; aux_tx_wr_en <= '1';
+                when x"181" => aux_tx_data <= x"01"; aux_tx_wr_en <= '1';
+                when x"182" => aux_tx_data <= x"03"; aux_tx_wr_en <= '1';
+                when x"183" => aux_tx_data <= x"03"; aux_tx_wr_en <= '1';
+                when x"184" => aux_tx_data <= x"06"; aux_tx_wr_en <= '1';
+                when x"185" => aux_tx_data <= x"06"; aux_tx_wr_en <= '1';
+                when x"186" => aux_tx_data <= x"06"; aux_tx_wr_en <= '1';
+                when x"187" => aux_tx_data <= x"06"; aux_tx_wr_en <= '1';
+                
 				when others => aux_tx_data <= x"00"; aux_tx_wr_en <= '0';
 			end case;
 

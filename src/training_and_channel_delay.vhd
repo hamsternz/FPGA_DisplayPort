@@ -31,8 +31,8 @@ entity training_and_channel_delay is
     port (
         clk            : in  std_logic;
         channel_delay  : in  std_logic_vector(1 downto 0);
-        send_pattern_1 : in  std_logic;
-        send_pattern_2 : in  std_logic;
+        clock_train    : in  std_logic;
+        align_train    : in  std_logic;
         data_in        : in  std_logic_vector(19 downto 0);
         data_out       : out std_logic_vector(19 downto 0)
     );
@@ -65,7 +65,7 @@ process(clk)
            delay_line(0) <= data_in;
            
            -- Do we ened to hold at state 1 until valid data has filtered down the delay line?
-           if send_pattern_2 = '1' or send_pattern_1 = '1' then
+           if align_train = '1' or clock_train = '1' then
                hold_at_state_1_shift_reg <= (others => '1');
             else
                hold_at_state_1_shift_reg <= '0' & hold_at_state_1_shift_reg(hold_at_state_1_shift_reg'high downto 1);
@@ -78,13 +78,13 @@ process(clk)
                 when x"3"   => state <= x"2"; delay_line(5) <= CODE_D10_2 & CODE_D10_2;
                 when x"2"   => state <= x"1"; delay_line(5) <= CODE_D10_2 & CODE_D10_2;                               
                 when x"1"   => state <= x"0"; delay_line(5) <= CODE_D10_2 & CODE_D10_2;
-                                if send_pattern_2 = '1' then
+                                if align_train = '1' then
                                     state <= x"5";
                                 elsif hold_at_state_1_shift_reg(0) = '1' then
                                     state <= x"1";
                                 end if;
                 when others => state <= x"0";
-                                if send_pattern_2 = '1' then
+                                if align_train = '1' then
                                     state <= x"5";
                                 elsif hold_at_state_1_shift_reg(0) = '1' then
                                     state <= x"1";

@@ -37,6 +37,12 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
+      <File Path="$PPRDIR/src/link_signal_mgmt.vhd">
+        <FileInfo>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
       <File Path="$PPRDIR/src/aux_channel.vhd">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
@@ -120,13 +126,13 @@
     </FileSet>
     <FileSet Name="sim_1" Type="SimulationSrcs" RelSrcDir="$PSRCDIR/sim_1">
       <Filter Type="Srcs"/>
-      <File Path="$PPRDIR/test_benches/tb_training_and_channel_delay.vhd">
+      <File Path="$PPRDIR/test_benches/tb_aux_channel.vhd">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/test_benches/tb_aux_channel.vhd">
+      <File Path="$PPRDIR/test_benches/tb_training_and_channel_delay.vhd">
         <FileInfo>
           <Attr Name="AutoDisabled" Val="1"/>
           <Attr Name="UsedIn" Val="synthesis"/>
@@ -147,7 +153,7 @@
       </File>
       <Config>
         <Option Name="DesignMode" Val="RTL"/>
-        <Option Name="TopModule" Val="tb_training_and_channel_delay"/>
+        <Option Name="TopModule" Val="tb_aux_channel"/>
         <Option Name="TopLib" Val="xil_defaultlib"/>
         <Option Name="SrcSet" Val="sources_1"/>
         <Option Name="XSimWcfgFile" Val="$PPRDIR/tb_aux_channel_behav.wcfg"/>
