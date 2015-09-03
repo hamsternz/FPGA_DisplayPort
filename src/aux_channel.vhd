@@ -223,8 +223,6 @@ clk_proc: process(clK)
                                                else
                                                    state_on_success <= clock_voltage_0p4;
                                                end if;
-                    
-                    state_on_success <= clock_wait;
                     ------- Display Port Alignment traning ------------                        
                     when align_training     => if swing_0p8 = '1' then
                                                     state_on_success <= align_p0_V0p8;
@@ -285,7 +283,8 @@ clk_proc: process(clK)
                 msg_de           <= '1';
                 adjust_de_active <= '0';
                 dp_reg_de_active <= '0';
-                edid_de_active   <= '0';                
+                edid_de_active   <= '0';
+                reset_addr_on_change <= '0';                
                 case next_state is
                     when reset                 => msg <= x"00"; expected <= x"00";
                     when check_presence        => msg <= x"01"; expected <= x"01"; reset_addr_on_change <= '1';
@@ -391,6 +390,10 @@ clk_proc: process(clK)
                 next_state <= state_on_success;
             end if;
             
+            edid_de    <= '0';
+            adjust_de  <= '0';
+            dp_reg_de  <= '0';                                
+            status_de  <= '0';
             if channel_busy = '0' then
                 if just_read_from_rx = '1' then
                     -- Is this a short read?
@@ -407,7 +410,7 @@ clk_proc: process(clK)
                             next_state <= state_on_success;
                         end if;
                     else
-                        -- Process the none-ack byte, roouting it out using the DE signals
+                        -- Process the none-ack byte, routing it out using the DE signals
                         edid_de    <= edid_de_active;
                         adjust_de  <= adjust_de_active;
                         dp_reg_de  <= dp_reg_de_active;                                
@@ -419,11 +422,10 @@ clk_proc: process(clK)
                         
                         if rx_byte_count = expected-1 then
                             next_state <= state_on_success;
+                            if reset_addr_on_change = '1' then
+                                aux_addr_i <= (others => '0'); 
+                            end if;                                       
                         end if;
-
-                        if reset_addr_on_change = '1' then
-                            aux_addr_i <= (others => '0'); 
-                        end if;                                       
                     end if;
                 end if;
             end if;

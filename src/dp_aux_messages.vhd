@@ -114,7 +114,7 @@ process(clk)
                 when x"0C3" => aux_tx_data <= x"00"; aux_tx_wr_en <= '1';
                 when x"0C4" => aux_tx_data <= x"21"; aux_tx_wr_en <= '1';
 
-				-- Resd link status for all four lanes 
+				-- Read link status for all four lanes 
                 when x"0D0" => aux_tx_data <= x"90"; aux_tx_wr_en <= '1';
                 when x"0D1" => aux_tx_data <= x"02"; aux_tx_wr_en <= '1';
                 when x"0D2" => aux_tx_data <= x"02"; aux_tx_wr_en <= '1';

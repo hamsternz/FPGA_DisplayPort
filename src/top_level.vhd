@@ -63,6 +63,7 @@ architecture Behavioral of top_level is
                powerup_channel : out std_logic_vector(3 downto 0);
 
                clock_adj_done  : out STD_LOGIC;
+               equ_adj_done    : out STD_LOGIC;
                align_adj_done  : out STD_LOGIC;
         
                preemp_0p0  : out STD_LOGIC;
@@ -282,6 +283,7 @@ architecture Behavioral of top_level is
 
     signal powerup_channel : std_logic_vector(3 downto 0);
     signal clock_adj_done  : std_logic := '0';
+    signal equ_adj_done    : std_logic := '0';
     signal align_adj_done  : std_logic := '0';
     signal preemp_0p0      : std_logic := '1';
     signal preemp_3p5      : STD_LOGIC := '0';
@@ -297,7 +299,7 @@ architecture Behavioral of top_level is
     signal interface_debug : std_logic_vector(7 downto 0);
 
     signal sink_channel_count   : std_logic_vector(2 downto 0) := "100";
-    signal source_channel_count : std_logic_vector(2 downto 0) := "010";
+    signal source_channel_count : std_logic_vector(2 downto 0) := "001";
     signal active_channel_count : std_logic_vector(2 downto 0) := "000";
      
 begin
@@ -363,7 +365,10 @@ i_aux_channel: aux_channel port map (
     debug_pmod(1) <= tx_running;
     debug_pmod(2) <= tx_clock_train;
     debug_pmod(3) <= tx_align_train;
-    debug_pmod(7 downto 4) <= tx_powerup & tx_powerup & tx_powerup & tx_powerup;
+    debug_pmod(4) <= tx_powerup;
+    debug_pmod(5) <= clock_adj_done;
+    debug_pmod(6) <= equ_adj_done;
+    debug_pmod(7) <= align_adj_done;
 
 i_edid_decode: edid_decode port map ( 
            clk              => clk,    
@@ -434,17 +439,6 @@ i_video_generator: video_generator Port map (
 --    debug_pmod(7) <= dp_valid;
 
 
-i_train_channel0: training_and_channel_delay port map (
-        clk            => txoutclkfabric,
-
-        channel_delay  => "00",
-        clock_train    => tx_clock_train,
-        align_train    => tx_align_train, 
-        
-        data_in        => x"33333",
-        data_out       => data_channel_0
-    );
-
 i_link_signal_mgmt:  link_signal_mgmt Port map (
         mgmt_clk        => clk,
 
@@ -462,6 +456,7 @@ i_link_signal_mgmt:  link_signal_mgmt Port map (
         powerup_channel => powerup_channel,
 
         clock_adj_done  => clock_adj_done,
+        equ_adj_done    => equ_adj_done,
         align_adj_done  => align_adj_done,
 
         preemp_0p0      => preemp_0p0, 
@@ -472,6 +467,16 @@ i_link_signal_mgmt:  link_signal_mgmt Port map (
         swing_0p6       => swing_0p6,
         swing_0p8       => swing_0p8);
 
+i_train_channel0: training_and_channel_delay port map (
+        clk            => txoutclkfabric,
+
+        channel_delay  => "00",
+        clock_train    => tx_clock_train,
+        align_train    => tx_align_train, 
+        
+        data_in        => x"33333",
+        data_out       => data_channel_0
+    );
 
 i_tx0: Transceiver Port map ( 
        mgmt_clk        => clk,
@@ -500,5 +505,6 @@ i_tx0: Transceiver Port map (
        txoutclk        => txoutclk,
        txoutclkfabric  => txoutclkfabric,
        txoutclkpcs     => txoutclkpcs);
+
     
 end Behavioral;
