@@ -46,6 +46,30 @@ entity top_level is
 end top_level;
 
 architecture Behavioral of top_level is
+    component test_source is
+        port ( 
+            clk    : in  std_logic;
+            data0  : out std_logic_vector(7 downto 0);
+            data0k : out std_logic;
+            data1  : out std_logic_vector(7 downto 0);
+            data1k : out std_logic
+        );
+    end component;
+
+    component data_to_8b10b is
+        port ( 
+            clk           : in  std_logic;
+            data0         : in  std_logic_vector(7 downto 0);
+            data0k        : in  std_logic;
+            data0forceneg : in  std_logic;
+            data1         : in  std_logic_vector(7 downto 0);
+            data1k        : in  std_logic;
+            data1forceneg : in  std_logic;
+            symbol0       : out std_logic_vector(9 downto 0);
+            symbol1       : out std_logic_vector(9 downto 0)
+        );
+    end component;
+
     component link_signal_mgmt is
         Port ( mgmt_clk    : in  STD_LOGIC;
 
@@ -62,9 +86,10 @@ architecture Behavioral of top_level is
 
                powerup_channel : out std_logic_vector(3 downto 0);
 
-               clock_adj_done  : out STD_LOGIC;
-               equ_adj_done    : out STD_LOGIC;
-               align_adj_done  : out STD_LOGIC;
+               clock_locked   : out STD_LOGIC;
+               equ_locked     : out STD_LOGIC;
+               symbol_locked  : out STD_LOGIC;
+               align_locked   : out STD_LOGIC;
         
                preemp_0p0  : out STD_LOGIC;
                preemp_3p5  : out STD_LOGIC;
@@ -100,7 +125,8 @@ architecture Behavioral of top_level is
            TXOUTCLKFABRIC : out STD_LOGIC;
            TXOUTCLKPCS    : out STD_LOGIC;
            
-           TXDATA         : in std_logic_vector(19 downto 0);
+           txsymbol0      : in  std_logic_vector(9 downto 0);
+           txsymbol1      : in  std_logic_vector(9 downto 0);
 
            gtptxp         : out std_logic;
            gtptxn         : out std_logic);
@@ -126,8 +152,10 @@ architecture Behavioral of top_level is
            preemp_0p0          : in    STD_LOGIC;
            preemp_3p5          : in    STD_LOGIC;
            preemp_6p0          : in    STD_LOGIC;
-           clock_adj_done      : in    STD_LOGIC;
-           align_adj_done      : in    STD_LOGIC;
+           clock_locked        : in    STD_LOGIC;
+           equ_locked          : in    STD_LOGIC;
+           symbol_locked       : in    STD_LOGIC;
+           align_locked        : in    STD_LOGIC;
 		   ------------------------------
            tx_powerup          : out   std_logic := '0';
            tx_clock_train      : out   std_logic := '0';
@@ -195,12 +223,22 @@ architecture Behavioral of top_level is
 
     component training_and_channel_delay is
     port (
-        clk            : in  std_logic;
-        channel_delay  : in  std_logic_vector(1 downto 0);
-        clock_train    : in  std_logic;
-        align_train    : in  std_logic;
-        data_in        : in  std_logic_vector(19 downto 0);
-        data_out       : out std_logic_vector(19 downto 0)
+        clk                : in  std_logic;
+        channel_delay      : in  std_logic_vector(1 downto 0);
+        clock_train        : in  std_logic;
+        align_train        : in  std_logic;
+
+        in_data0           : in  std_logic_vector(7 downto 0);
+        in_data0k          : in  std_logic;
+        in_data1           : in  std_logic_vector(7 downto 0);
+        in_data1k          : in  std_logic;
+
+        out_data0          : out std_logic_vector(7 downto 0);
+        out_data0k         : out std_logic;
+        out_data0forceneg  : out std_logic;
+        out_data1          : out std_logic_vector(7 downto 0);
+        out_data1k         : out std_logic;
+        out_data1forceneg  : out std_logic
     );
     end component;
 
@@ -282,9 +320,11 @@ architecture Behavioral of top_level is
     signal tx_running       : std_logic := '0';
 
     signal powerup_channel : std_logic_vector(3 downto 0);
-    signal clock_adj_done  : std_logic := '0';
-    signal equ_adj_done    : std_logic := '0';
-    signal align_adj_done  : std_logic := '0';
+    signal clock_locked    : std_logic := '0';
+    signal equ_locked      : std_logic := '0';
+    signal symbol_locked   : std_logic := '0';
+    signal align_locked    : std_logic := '0';
+    
     signal preemp_0p0      : std_logic := '1';
     signal preemp_3p5      : STD_LOGIC := '0';
     signal preemp_6p0      : STD_LOGIC := '0';
@@ -301,31 +341,56 @@ architecture Behavioral of top_level is
     signal sink_channel_count   : std_logic_vector(2 downto 0) := "100";
     signal source_channel_count : std_logic_vector(2 downto 0) := "001";
     signal active_channel_count : std_logic_vector(2 downto 0) := "000";
-     
+
+    signal debug       : std_logic_vector(7 downto 0);
+    signal test_signal : std_logic_vector(8 downto 0);
+
+    signal test_signal_data0      : std_logic_vector(7 downto 0);
+    signal test_signal_data0k     : std_logic;
+    signal test_signal_data1      : std_logic_vector(7 downto 0);
+    signal test_signal_data1k     : std_logic;
+    signal test_signal_symbol0     : std_logic_vector(9 downto 0);
+    signal test_signal_symbol1     : std_logic_vector(9 downto 0);
+    --
+    signal ch0_data0              : std_logic_vector(7 downto 0);
+    signal ch0_data0k             : std_logic;
+    signal ch0_data0forceneg      : std_logic;
+    signal ch0_symbol0            : std_logic_vector(9 downto 0);
+    --
+    signal ch0_data1              : std_logic_vector(7 downto 0);
+    signal ch0_data1k             : std_logic;
+    signal ch0_data1forceneg      : std_logic;
+    signal ch0_symbol1            : std_logic_vector(9 downto 0);
+
 begin
 process(clk)
     begin
         if rising_edge(clk) then
-            case switches(3 downto 0) is
-                when "0000" => leds <= h_visible_len(7 downto 0);
-                when "0001" => leds <= "0000" & h_visible_len(11 downto 8);
-                when "0010" => leds <= h_blank_len(7 downto 0);
-                when "0011" => leds <= "0000" & h_blank_len(11 downto 8);
-                when "0100" => leds <= h_front_len(7 downto 0);
-                when "0101" => leds <= "0000" & h_front_len(11 downto 8);
-                when "0110" => leds <= h_sync_len(7 downto 0);
-                when "0111" => leds <= "0000" & h_sync_len(11 downto 8);
-                when "1000" => leds <= h_visible_len(7 downto 0);
-                when "1001" => leds <= "0000" & v_visible_len(11 downto 8);
-                when "1010" => leds <= h_blank_len(7 downto 0);
-                when "1011" => leds <= "0000" & v_blank_len(11 downto 8);
-                when "1100" => leds <= h_front_len(7 downto 0);
-                when "1101" => leds <= "0000" & v_front_len(11 downto 8);
-                when "1110" => leds <= h_sync_len(7 downto 0);
-                when others => leds <= "0000" & v_sync_len(11 downto 8);
+            if status_de = '1' and aux_addr = x"00" then
+               debug <= aux_data;
+            end if;
+            case switches(4 downto 0) is
+                when "00000" => leds <= h_visible_len(7 downto 0);
+                when "00001" => leds <= "0000" & h_visible_len(11 downto 8);
+                when "00010" => leds <= h_blank_len(7 downto 0);
+                when "00011" => leds <= "0000" & h_blank_len(11 downto 8);
+                when "00100" => leds <= h_front_len(7 downto 0);
+                when "00101" => leds <= "0000" & h_front_len(11 downto 8);
+                when "00110" => leds <= h_sync_len(7 downto 0);
+                when "00111" => leds <= "0000" & h_sync_len(11 downto 8);
+                when "01000" => leds <= V_visible_len(7 downto 0);
+                when "01001" => leds <= "0000" & v_visible_len(11 downto 8);
+                when "01010" => leds <= V_blank_len(7 downto 0);
+                when "01011" => leds <= "0000" & v_blank_len(11 downto 8);
+                when "01100" => leds <= V_front_len(7 downto 0);
+                when "01101" => leds <= "0000" & v_front_len(11 downto 8);
+                when "01110" => leds <= V_sync_len(7 downto 0);
+                when "01111" => leds <= "0000" & v_sync_len(11 downto 8);
+                when others  => leds <= debug;
             end case;
         end if;
     end process;
+    
 i_aux_channel: aux_channel port map ( 
 		   clk             => clk,
 		   debug_pmod      => interface_debug,
@@ -334,8 +399,8 @@ i_aux_channel: aux_channel port map (
            dp_reg_de       => dp_reg_de,
            adjust_de       => adjust_de,
            status_de       => status_de,
-           aux_addr        => aux_data,
-		   aux_data        => aux_addr,
+           aux_addr        => aux_addr,
+		   aux_data        => aux_data,
 		   ------------------------------
 		   link_count      => active_channel_count,
 
@@ -345,8 +410,11 @@ i_aux_channel: aux_channel port map (
            swing_0p4       => swing_0p4,
            swing_0p6       => swing_0p6,
            swing_0p8       => swing_0p8,
-           clock_adj_done  => clock_adj_done,
-           align_adj_done  => align_adj_done,
+           
+           clock_locked    => clock_locked,
+           equ_locked      => equ_locked,
+           symbol_locked   => symbol_locked,
+           align_locked    => align_locked,
            
 		   ------------------------------
            tx_powerup          => tx_powerup,
@@ -361,20 +429,12 @@ i_aux_channel: aux_channel port map (
            dp_rx_aux_n     => dp_rx_aux_n
 		);
 
-    debug_pmod(0) <= interface_debug(0);
-    debug_pmod(1) <= tx_running;
-    debug_pmod(2) <= tx_clock_train;
-    debug_pmod(3) <= tx_align_train;
-    debug_pmod(4) <= tx_powerup;
-    debug_pmod(5) <= clock_adj_done;
-    debug_pmod(6) <= equ_adj_done;
-    debug_pmod(7) <= align_adj_done;
 
 i_edid_decode: edid_decode port map ( 
            clk              => clk,    
            edid_de          => edid_de,
-           edid_addr        => aux_data,
-           edid_data        => aux_addr,
+           edid_addr        => aux_addr,
+           edid_data        => aux_data,
            invalidate       => '0',
     
            valid            => edid_valid,
@@ -399,8 +459,8 @@ i_edid_decode: edid_decode port map (
 i_dp_reg_decode: dp_register_decode port map ( 
             clk                => clk,
             de                 => dp_reg_de,
-            data               => aux_data,
             addr               => aux_addr,
+            data               => aux_data,
             invalidate         => '0',
             valid              => dp_valid,
             
@@ -416,28 +476,22 @@ i_dp_reg_decode: dp_register_decode port map (
             norp               => dp_norp
        );
 
-i_video_generator: video_generator Port map (
-            clk              => clk,    
- 
-            h_visible_len    => h_visible_len,
-            h_blank_len      => h_blank_len,
-            h_front_len      => h_front_len,
-            h_sync_len       => h_sync_len,
-            
-            v_visible_len    => v_visible_len,
-            v_blank_len      => v_blank_len,
-            v_front_len      => v_front_len,
-            v_sync_len       => v_sync_len,
- 
-            vid_blank        => open,
-            vid_hsync        => open,
-            vid_vsync        => open);
-
---    debug_pmod(4) <= support_RGB444;
---    debug_pmod(5) <= support_YCC444;
---    debug_pmod(6) <= support_YCC422;
---    debug_pmod(7) <= dp_valid;
-
+--i_video_generator: video_generator Port map (
+--            clk              => clk,    
+-- 
+--            h_visible_len    => h_visible_len,
+--            h_blank_len      => h_blank_len,
+--            h_front_len      => h_front_len,
+--            h_sync_len       => h_sync_len,
+--            
+--            v_visible_len    => v_visible_len,
+--            v_blank_len      => v_blank_len,
+--            v_front_len      => v_front_len,
+--            v_sync_len       => v_sync_len,
+-- 
+--            vid_blank        => open,
+--            vid_hsync        => open,
+--            vid_vsync        => open);
 
 i_link_signal_mgmt:  link_signal_mgmt Port map (
         mgmt_clk        => clk,
@@ -446,8 +500,8 @@ i_link_signal_mgmt:  link_signal_mgmt Port map (
         
         status_de       => status_de,
         adjust_de       => adjust_de,
-        data            => aux_data,
         addr            => aux_addr,
+        data            => aux_data,
 
         sink_channel_count   => sink_channel_count,
         source_channel_count => source_channel_count,
@@ -455,9 +509,10 @@ i_link_signal_mgmt:  link_signal_mgmt Port map (
 
         powerup_channel => powerup_channel,
 
-        clock_adj_done  => clock_adj_done,
-        equ_adj_done    => equ_adj_done,
-        align_adj_done  => align_adj_done,
+        clock_locked    => clock_locked,
+        equ_locked      => equ_locked,
+        symbol_locked   => symbol_locked,
+        align_locked    => align_locked,
 
         preemp_0p0      => preemp_0p0, 
         preemp_3p5      => preemp_3p5,
@@ -467,16 +522,56 @@ i_link_signal_mgmt:  link_signal_mgmt Port map (
         swing_0p6       => swing_0p6,
         swing_0p8       => swing_0p8);
 
-i_train_channel0: training_and_channel_delay port map (
-        clk            => txoutclkfabric,
+    debug_pmod(0) <= interface_debug(0);
+    debug_pmod(1) <= interface_debug(1);
+    debug_pmod(2) <= interface_debug(2);
+    debug_pmod(3) <= tx_powerup;
+    debug_pmod(4) <= clock_locked;
+    debug_pmod(5) <= equ_locked;
+    debug_pmod(6) <= symbol_locked;
+    debug_pmod(7) <= align_locked;
 
-        channel_delay  => "00",
-        clock_train    => tx_clock_train,
-        align_train    => tx_align_train, 
+i_test_source : test_source port map ( 
+            clk    => txoutclkfabric,
+            data0  => test_signal_data0,
+            data0k => test_signal_data0k,
+            data1  => test_signal_data1,
+            data1k => test_signal_data1k
+        );
+
+
+i_train_channel0: training_and_channel_delay port map (
+        clk             => txoutclkfabric,
+
+        channel_delay   => "00",
+        clock_train     => tx_clock_train,
+        align_train     => tx_align_train, 
         
-        data_in        => x"33333",
-        data_out       => data_channel_0
+        in_data0          => test_signal_data0,
+        in_data0k         => test_signal_data0k,
+        in_data1          => test_signal_data1,
+        in_data1k         => test_signal_data1k,
+
+        out_data0         => ch0_data0,
+        out_data0k        => ch0_data0k,
+        out_data0forceneg => ch0_data0forceneg,
+        out_data1         => ch0_data1,
+        out_data1k        => ch0_data1k,
+        out_data1forceneg => ch0_data1forceneg
     );
+
+i_data_to_8b10b: data_to_8b10b port map ( 
+        clk           => txoutclkfabric,
+        data0         => ch0_data0,
+        data0k        => ch0_data0k,
+        data0forceneg => ch0_data0forceneg,
+        data1         => ch0_data1,
+        data1k        => ch0_data1k,
+        data1forceneg => ch0_data0forceneg,
+        symbol0       => ch0_symbol0,
+        symbol1       => ch0_symbol1
+        );
+
 
 i_tx0: Transceiver Port map ( 
        mgmt_clk        => clk,
@@ -497,8 +592,9 @@ i_tx0: Transceiver Port map (
        refclk1_p       => refclk1_p,
        refclk1_n       => refclk1_n,
 
-       txdata          => data_channel_0,
-
+       txsymbol0      => ch0_symbol0,
+       txsymbol1      => ch0_symbol0,
+                  
        gtptxp          => gtptxp,
        gtptxn          => gtptxn,
        

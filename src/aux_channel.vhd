@@ -37,8 +37,10 @@ entity aux_channel is
            preemp_0p0          : in    STD_LOGIC;
            preemp_3p5          : in    STD_LOGIC;
            preemp_6p0          : in    STD_LOGIC;
-           clock_adj_done      : in    STD_LOGIC;
-           align_adj_done      : in    STD_LOGIC;
+           clock_locked        : in    STD_LOGIC;
+           equ_locked          : in    STD_LOGIC;
+           symbol_locked       : in    STD_LOGIC;
+           align_locked        : in    STD_LOGIC;
 		   ------------------------------
 		   dp_tx_hp_detect     : in    std_logic;
            dp_tx_aux_p         : inout std_logic;
@@ -67,7 +69,7 @@ architecture arch of aux_channel is
                     align_wait0,   align_wait1,   align_wait2,   align_wait3,
                     align_test,    align_adjust,  align_wait_after,   
                     -- Link up.
-                    link_established);
+                    switch_to_normal, link_established);
                     
                     
     signal state            : t_state               := error;
@@ -139,9 +141,12 @@ architecture arch of aux_channel is
 	
 	signal just_read_from_rx :std_logic := '0';
     signal powerup_mask  : std_logic_vector(3 downto 0);
-
+    signal debug_pmod_i  : std_logic_vector(7 downto 0);
 begin
-
+    debug_pmod(0) <= debug_pmod_i(0);
+    debug_pmod(1) <= status_de_active;
+    debug_pmod(2) <= adjust_de_active;
+    
 i_aux_messages: dp_aux_messages port map (
 		   clk             => clk,
 		   -- Interface to send messages
@@ -155,7 +160,7 @@ i_aux_messages: dp_aux_messages port map (
 
 i_channel: aux_interface port map ( 
 		   clk         => clk,
-		   debug_pmod  => debug_pmod, 
+		   debug_pmod  => debug_pmod_i, 
 		   ------------------------------
            dp_tx_aux_p => dp_tx_aux_p,
            dp_tx_aux_n => dp_tx_aux_n,
@@ -214,7 +219,7 @@ clk_proc: process(clK)
                     when clock_wait         => state_on_success <= clock_test;                        
                     when clock_test         => state_on_success <= clock_adjust;
                     when clock_adjust       => state_on_success <= clock_wait_after;
-                    when clock_wait_after   => if clock_adj_done = '1' then
+                    when clock_wait_after   => if clock_locked = '1' then
                                                    state_on_success <= align_training;
                                                elsif swing_0p8 = '1' then
                                                    state_on_success <= clock_voltage_0p8;
@@ -246,8 +251,8 @@ clk_proc: process(clK)
                     when align_wait3        => state_on_success <= align_test;                        
                     when align_test         => state_on_success <= align_adjust;                        
                     when align_adjust       => state_on_success <= align_wait_after;
-                    when align_wait_after   => if align_adj_done = '1' then
-                                                   state_on_success <= link_established;
+                    when align_wait_after   => if symbol_locked = '1' then
+                                                   state_on_success <= switch_to_normal;
                                                elsif swing_0p8 = '1' then
                                                    if preemp_6p0 = '1' then
                                                        state_on_success <= align_p2_V0p8;
@@ -273,6 +278,7 @@ clk_proc: process(clK)
                                                        state_on_success <= align_p0_V0p4;
                                                    end if;
                                                end if;                        
+                    when switch_to_normal   => state_on_success <= link_established;  
                     when link_established   => state_on_success <= link_established;  
                     when error              => state_on_success <= error;
 
@@ -281,6 +287,7 @@ clk_proc: process(clK)
 
                 -- Controlling what message will be sent, how many words are expected back and where it will be routed.
                 msg_de           <= '1';
+                status_de_active <= '0';
                 adjust_de_active <= '0';
                 dp_reg_de_active <= '0';
                 edid_de_active   <= '0';
@@ -312,7 +319,7 @@ clk_proc: process(clK)
                     when clock_voltage_0p6     => msg <= x"16"; expected <= x"01";
                     when clock_voltage_0p8     => msg <= x"18"; expected <= x"01";
                     when clock_wait            => msg <= x"00"; expected <= x"00";  reset_addr_on_change <= '1';
-                    when clock_test            => msg <= x"0D"; expected <= x"03";  status_de_active <= '1'; reset_addr_on_change <= '1';
+                    when clock_test            => msg <= x"0D"; expected <= x"04";  status_de_active <= '1'; reset_addr_on_change <= '1';
                     when clock_adjust          => msg <= x"0E"; expected <= x"03";  adjust_de_active <= '1';
                     when clock_wait_after      => msg <= x"00"; expected <= x"00"; 
                     
@@ -330,9 +337,11 @@ clk_proc: process(clK)
                     when align_wait1           => msg <= x"00"; expected <= x"00";
                     when align_wait2           => msg <= x"00"; expected <= x"00";
                     when align_wait3           => msg <= x"00"; expected <= x"00";  reset_addr_on_change <= '1';
-                    when align_test            => msg <= x"0D"; expected <= x"01";  status_de_active <= '1'; reset_addr_on_change <= '1';
-                    when align_adjust          => msg <= x"0E"; expected <= x"01";  adjust_de_active <= '1';
+                    when align_test            => msg <= x"0D"; expected <= x"04";  status_de_active <= '1'; reset_addr_on_change <= '1';
+                    when align_adjust          => msg <= x"0E"; expected <= x"03";  adjust_de_active <= '1';
                     when align_wait_after      => msg <= x"00"; expected <= x"00";
+
+                    when switch_to_normal      => msg <= x"11"; expected <= x"01";
                     when link_established      => msg <= x"00"; expected <= x"00";
                     when error                 => msg <= x"00";
                     when others                => msg <= x"00";
@@ -370,6 +379,7 @@ clk_proc: process(clK)
                     when align_test            => tx_powerup <= '1'; tx_align_train <= '1';
                     when align_adjust          => tx_powerup <= '1'; tx_align_train <= '1';
                     when align_wait_after      => tx_powerup <= '1'; tx_align_train <= '1';
+                    when switch_to_normal      => tx_powerup <= '1'; tx_align_train <= '1';
                     when link_established      => tx_powerup <= '1'; tx_link_established <= '1';
                     when others                => NULL;
                 end case;

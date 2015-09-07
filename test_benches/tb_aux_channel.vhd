@@ -44,6 +44,7 @@ architecture arch of tb_aux_channel is
     signal refclk1_n       : STD_LOGIC := '0';
     signal gtptxp          : std_logic;
     signal gtptxn          : std_logic;    
+    
 begin
 
 uut: top_level PORT MAP (
@@ -72,6 +73,8 @@ process
         wait until rising_edge(dp_tx_aux_p);
         wait until rising_edge(dp_tx_aux_p);
         wait for 100 us;
+        
+        -- Reply with 00s
         for i in 0 to 15 loop
             dp_tx_aux_p <= '0';
             dp_tx_aux_n <= '1';
@@ -166,7 +169,412 @@ process
             dp_tx_aux_p <= 'Z';
             dp_tx_aux_n <= 'Z';
         end loop;
+        
+-- Now the display port version read
+-- Reply with 00 01
+        wait until rising_edge(dp_tx_aux_p);
+        wait until rising_edge(dp_tx_aux_p);
+        wait until rising_edge(dp_tx_aux_p);
+        wait for 100 us;
+        for i in 0 to 15 loop
+            dp_tx_aux_p <= '0';
+            dp_tx_aux_n <= '1';
+            wait for 500 ns;
+            dp_tx_aux_p <= '1';
+            dp_tx_aux_n <= '0';
+            wait for 500 ns;
+        end loop;
 
+        dp_tx_aux_p <= '1';
+        dp_tx_aux_n <= '0';
+        wait for 2000 ns;
+        dp_tx_aux_p <= '0';
+        dp_tx_aux_n <= '1';
+        wait for 2000 ns;
+
+        for i in 0 to 15 loop
+            dp_tx_aux_p <= '0';
+            dp_tx_aux_n <= '1';
+            wait for 500 ns;
+            dp_tx_aux_p <= '1';
+            dp_tx_aux_n <= '0';
+            wait for 500 ns;
+        end loop;
+
+        dp_tx_aux_p <= '1';
+        dp_tx_aux_n <= '0';
+        wait for 2000 ns;
+        dp_tx_aux_p <= '0';
+        dp_tx_aux_n <= '1';
+        wait for 2000 ns;
+        dp_tx_aux_p <= 'Z';
+        dp_tx_aux_n <= 'Z';
+
+
+-- Now the DisplayPort register read
+-- Reply with 00 00 00 00 00 00 00 00 00 00 00 00 00
+        wait until rising_edge(dp_tx_aux_p);
+        wait until rising_edge(dp_tx_aux_p);
+        wait until rising_edge(dp_tx_aux_p);
+        wait for 100 us;
+        for i in 0 to 15 loop
+            dp_tx_aux_p <= '0';
+            dp_tx_aux_n <= '1';
+            wait for 500 ns;
+            dp_tx_aux_p <= '1';
+            dp_tx_aux_n <= '0';
+            wait for 500 ns;
+        end loop;
+
+        dp_tx_aux_p <= '1';
+        dp_tx_aux_n <= '0';
+        wait for 2000 ns;
+        dp_tx_aux_p <= '0';
+        dp_tx_aux_n <= '1';
+        wait for 2000 ns;
+
+        for i in 0 to 13*8 loop
+            dp_tx_aux_p <= '0';
+            dp_tx_aux_n <= '1';
+            wait for 500 ns;
+            dp_tx_aux_p <= '1';
+            dp_tx_aux_n <= '0';
+            wait for 500 ns;
+        end loop;
+
+        dp_tx_aux_p <= '1';
+        dp_tx_aux_n <= '0';
+        wait for 2000 ns;
+        dp_tx_aux_p <= '0';
+        dp_tx_aux_n <= '1';
+        wait for 2000 ns;
+        dp_tx_aux_p <= 'Z';
+        dp_tx_aux_n <= 'Z';
+        
+ --- register write 1
+        wait until rising_edge(dp_tx_aux_p);
+        wait until rising_edge(dp_tx_aux_p);
+        wait until rising_edge(dp_tx_aux_p);
+        wait for 100 us;
+        
+        -- Reply with 00s
+        for i in 0 to 7 loop
+            dp_tx_aux_p <= '0';
+            dp_tx_aux_n <= '1';
+            wait for 500 ns;
+            dp_tx_aux_p <= '1';
+            dp_tx_aux_n <= '0';
+            wait for 500 ns;
+        end loop;
+
+        dp_tx_aux_p <= '1';
+        dp_tx_aux_n <= '0';
+        wait for 2000 ns;
+        dp_tx_aux_p <= '0';
+        dp_tx_aux_n <= '1';
+        wait for 2000 ns;
+
+        for i in 0 to 7 loop
+            dp_tx_aux_p <= '0';
+            dp_tx_aux_n <= '1';
+            wait for 500 ns;
+            dp_tx_aux_p <= '1';
+            dp_tx_aux_n <= '0';
+            wait for 500 ns;
+        end loop;
+
+        dp_tx_aux_p <= '1';
+        dp_tx_aux_n <= '0';
+        wait for 2000 ns;
+        dp_tx_aux_p <= '0';
+        dp_tx_aux_n <= '1';
+        wait for 2000 ns;
+        dp_tx_aux_p <= 'Z';
+        dp_tx_aux_n <= 'Z';
+
+ --- register write 2
+        wait until rising_edge(dp_tx_aux_p);
+        wait until rising_edge(dp_tx_aux_p);
+        wait until rising_edge(dp_tx_aux_p);
+        wait for 100 us;
+        
+        -- Reply with 00s
+        for i in 0 to 15 loop
+            dp_tx_aux_p <= '0';
+            dp_tx_aux_n <= '1';
+            wait for 500 ns;
+            dp_tx_aux_p <= '1';
+            dp_tx_aux_n <= '0';
+            wait for 500 ns;
+        end loop;
+
+        dp_tx_aux_p <= '1';
+        dp_tx_aux_n <= '0';
+        wait for 2000 ns;
+        dp_tx_aux_p <= '0';
+        dp_tx_aux_n <= '1';
+        wait for 2000 ns;
+
+        for i in 0 to 7 loop
+            dp_tx_aux_p <= '0';
+            dp_tx_aux_n <= '1';
+            wait for 500 ns;
+            dp_tx_aux_p <= '1';
+            dp_tx_aux_n <= '0';
+            wait for 500 ns;
+        end loop;
+
+        dp_tx_aux_p <= '1';
+        dp_tx_aux_n <= '0';
+        wait for 2000 ns;
+        dp_tx_aux_p <= '0';
+        dp_tx_aux_n <= '1';
+        wait for 2000 ns;
+        dp_tx_aux_p <= 'Z';
+        dp_tx_aux_n <= 'Z';
+
+ --- register write downspread
+        wait until rising_edge(dp_tx_aux_p);
+        wait until rising_edge(dp_tx_aux_p);
+        wait until rising_edge(dp_tx_aux_p);
+        wait for 100 us;
+        
+        -- Reply with 00s
+        for i in 0 to 15 loop
+            dp_tx_aux_p <= '0';
+            dp_tx_aux_n <= '1';
+            wait for 500 ns;
+            dp_tx_aux_p <= '1';
+            dp_tx_aux_n <= '0';
+            wait for 500 ns;
+        end loop;
+
+        dp_tx_aux_p <= '1';
+        dp_tx_aux_n <= '0';
+        wait for 2000 ns;
+        dp_tx_aux_p <= '0';
+        dp_tx_aux_n <= '1';
+        wait for 2000 ns;
+
+        for i in 0 to 7 loop
+            dp_tx_aux_p <= '0';
+            dp_tx_aux_n <= '1';
+            wait for 500 ns;
+            dp_tx_aux_p <= '1';
+            dp_tx_aux_n <= '0';
+            wait for 500 ns;
+        end loop;
+
+        dp_tx_aux_p <= '1';
+        dp_tx_aux_n <= '0';
+        wait for 2000 ns;
+        dp_tx_aux_p <= '0';
+        dp_tx_aux_n <= '1';
+        wait for 2000 ns;
+        dp_tx_aux_p <= 'Z';
+        dp_tx_aux_n <= 'Z';
+
+
+--- register write set link count
+        wait until rising_edge(dp_tx_aux_p);
+        wait until rising_edge(dp_tx_aux_p);
+        wait until rising_edge(dp_tx_aux_p);
+        wait for 100 us;
+        
+        -- Reply with 00s
+        for i in 0 to 15 loop
+            dp_tx_aux_p <= '0';
+            dp_tx_aux_n <= '1';
+            wait for 500 ns;
+            dp_tx_aux_p <= '1';
+            dp_tx_aux_n <= '0';
+            wait for 500 ns;
+        end loop;
+
+        dp_tx_aux_p <= '1';
+        dp_tx_aux_n <= '0';
+        wait for 2000 ns;
+        dp_tx_aux_p <= '0';
+        dp_tx_aux_n <= '1';
+        wait for 2000 ns;
+
+        for i in 0 to 7 loop
+            dp_tx_aux_p <= '0';
+            dp_tx_aux_n <= '1';
+            wait for 500 ns;
+            dp_tx_aux_p <= '1';
+            dp_tx_aux_n <= '0';
+            wait for 500 ns;
+        end loop;
+
+        dp_tx_aux_p <= '1';
+        dp_tx_aux_n <= '0';
+        wait for 2000 ns;
+        dp_tx_aux_p <= '0';
+        dp_tx_aux_n <= '1';
+        wait for 2000 ns;
+        dp_tx_aux_p <= 'Z';
+        dp_tx_aux_n <= 'Z';
+
+--- register write link tranning pattern # 1 
+        wait until rising_edge(dp_tx_aux_p);
+        wait until rising_edge(dp_tx_aux_p);
+        wait until rising_edge(dp_tx_aux_p);
+        wait for 100 us;
+        
+        -- Reply with 00s
+        for i in 0 to 15 loop
+            dp_tx_aux_p <= '0';
+            dp_tx_aux_n <= '1';
+            wait for 500 ns;
+            dp_tx_aux_p <= '1';
+            dp_tx_aux_n <= '0';
+            wait for 500 ns;
+        end loop;
+
+        dp_tx_aux_p <= '1';
+        dp_tx_aux_n <= '0';
+        wait for 2000 ns;
+        dp_tx_aux_p <= '0';
+        dp_tx_aux_n <= '1';
+        wait for 2000 ns;
+
+        for i in 0 to 7 loop
+            dp_tx_aux_p <= '0';
+            dp_tx_aux_n <= '1';
+            wait for 500 ns;
+            dp_tx_aux_p <= '1';
+            dp_tx_aux_n <= '0';
+            wait for 500 ns;
+        end loop;
+
+        dp_tx_aux_p <= '1';
+        dp_tx_aux_n <= '0';
+        wait for 2000 ns;
+        dp_tx_aux_p <= '0';
+        dp_tx_aux_n <= '1';
+        wait for 2000 ns;
+        dp_tx_aux_p <= 'Z';
+        dp_tx_aux_n <= 'Z';
+
+--- register write set link voltages 
+        wait until rising_edge(dp_tx_aux_p);
+        wait until rising_edge(dp_tx_aux_p);
+        wait until rising_edge(dp_tx_aux_p);
+        wait for 100 us;
+        
+        -- Reply with 00s
+        for i in 0 to 15 loop
+            dp_tx_aux_p <= '0';
+            dp_tx_aux_n <= '1';
+            wait for 500 ns;
+            dp_tx_aux_p <= '1';
+            dp_tx_aux_n <= '0';
+            wait for 500 ns;
+        end loop;
+
+        dp_tx_aux_p <= '1';
+        dp_tx_aux_n <= '0';
+        wait for 2000 ns;
+        dp_tx_aux_p <= '0';
+        dp_tx_aux_n <= '1';
+        wait for 2000 ns;
+
+        for i in 0 to 7 loop
+            dp_tx_aux_p <= '0';
+            dp_tx_aux_n <= '1';
+            wait for 500 ns;
+            dp_tx_aux_p <= '1';
+            dp_tx_aux_n <= '0';
+            wait for 500 ns;
+        end loop;
+
+        dp_tx_aux_p <= '1';
+        dp_tx_aux_n <= '0';
+        wait for 2000 ns;
+        dp_tx_aux_p <= '0';
+        dp_tx_aux_n <= '1';
+        wait for 2000 ns;
+        dp_tx_aux_p <= 'Z';
+        dp_tx_aux_n <= 'Z';
+
+--- register read - link status  
+        wait until rising_edge(dp_tx_aux_p);
+        wait until rising_edge(dp_tx_aux_p);
+        wait until rising_edge(dp_tx_aux_p);
+        wait for 100 us;
+        
+        -- Reply with 00 01 00 00 
+        for i in 0 to 15 loop
+            dp_tx_aux_p <= '0';
+            dp_tx_aux_n <= '1';
+            wait for 500 ns;
+            dp_tx_aux_p <= '1';
+            dp_tx_aux_n <= '0';
+            wait for 500 ns;
+        end loop;
+
+        dp_tx_aux_p <= '1';
+        dp_tx_aux_n <= '0';
+        wait for 2000 ns;
+        dp_tx_aux_p <= '0';
+        dp_tx_aux_n <= '1';
+        wait for 2000 ns;
+
+        for i in 0 to 7 loop
+            dp_tx_aux_p <= '0';
+            dp_tx_aux_n <= '1';
+            wait for 500 ns;
+            dp_tx_aux_p <= '1';
+            dp_tx_aux_n <= '0';
+            wait for 500 ns;
+        end loop;
+        
+        for i in 0 to 6 loop
+            dp_tx_aux_p <= '0';
+            dp_tx_aux_n <= '1';
+            wait for 500 ns;
+            dp_tx_aux_p <= '1';
+            dp_tx_aux_n <= '0';
+            wait for 500 ns;
+        end loop;
+
+        dp_tx_aux_p <= '1';
+        dp_tx_aux_n <= '0';
+        wait for 500 ns;
+        dp_tx_aux_p <= '0';
+        dp_tx_aux_n <= '1';
+        wait for 500 ns;
+
+        for i in 0 to 7 loop
+            dp_tx_aux_p <= '0';
+            dp_tx_aux_n <= '1';
+            wait for 500 ns;
+            dp_tx_aux_p <= '1';
+            dp_tx_aux_n <= '0';
+            wait for 500 ns;
+        end loop;
+
+        for i in 0 to 7 loop
+            dp_tx_aux_p <= '0';
+            dp_tx_aux_n <= '1';
+            wait for 500 ns;
+            dp_tx_aux_p <= '1';
+            dp_tx_aux_n <= '0';
+            wait for 500 ns;
+        end loop;
+
+        dp_tx_aux_p <= '1';
+        dp_tx_aux_n <= '0';
+        wait for 2000 ns;
+        dp_tx_aux_p <= '0';
+        dp_tx_aux_n <= '1';
+        wait for 2000 ns;
+        dp_tx_aux_p <= 'Z';
+        dp_tx_aux_n <= 'Z';
+
+
+        wait;
     end process;
 process
 	begin

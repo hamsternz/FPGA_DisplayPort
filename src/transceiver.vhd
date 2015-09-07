@@ -49,7 +49,8 @@ entity Transceiver is
            TXOUTCLKFABRIC : out STD_LOGIC;
            TXOUTCLKPCS    : out STD_LOGIC;
            
-           TXDATA         : in std_logic_vector(19 downto 0);
+           txsymbol0      : in  std_logic_vector(9 downto 0);
+           txsymbol1      : in  std_logic_vector(9 downto 0);
            
            gtptxp         : out std_logic;
            gtptxn         : out std_logic);
@@ -59,6 +60,7 @@ architecture Behavioral of transceiver is
     signal txchardispmode :   std_logic_vector(3 downto 0);
     signal txchardispval  :   std_logic_vector(3 downto 0);
     signal txdata_for_tx  :   std_logic_vector(31 downto 0);
+    signal TXCHARISK      : STD_LOGIC_VECTOR(3 downto 0) := (others => '0');
     
     component gtx_tx_reset_controller is
     port (  clk             : in  std_logic;
@@ -151,9 +153,10 @@ i_gtx_tx_reset_controller: gtx_tx_reset_controller
 
     -------------  GT txdata_i Assignments for 20 bit datapath  -------  
 
-    txchardispmode  <= "00"    & txdata(19)           & txdata(9);
-    txchardispval   <= "00"    & txdata(18)           & txdata(8);
-    txdata_for_tx   <= x"0000" & txdata(17 downto 10) & txdata(7 downto 0);
+    txchardispmode  <= "00"    & txsymbol1(9)          & txsymbol0(9);
+    txchardispval   <= "00"    & txsymbol1(8)          & txsymbol0(8);
+    txdata_for_tx   <= x"0000" & txsymbol1(7 downto 0) & txsymbol0(7 downto 0);
+    TXCHARISK       <= "0000";              
 
 I_IBUFDS_GTE2_0 : IBUFDS_GTE2  
     port map
@@ -818,7 +821,7 @@ gtpe2_i : GTPE2_CHANNEL
         TX8B10BBYPASS                   =>      (others => '0'),
         TXCHARDISPMODE                  =>      txchardispmode,
         TXCHARDISPVAL                   =>      txchardispval,
-        TXCHARISK                       =>      (others => '0'),
+        TXCHARISK                       =>      txcharisk,
         ------------------ Transmit Ports - TX Buffer Bypass Ports -----------------
         TXDLYBYPASS                     =>      '1',
         TXDLYEN                         =>      '0',

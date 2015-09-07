@@ -118,7 +118,7 @@ process(clk)
                 when x"0D0" => aux_tx_data <= x"90"; aux_tx_wr_en <= '1';
                 when x"0D1" => aux_tx_data <= x"02"; aux_tx_wr_en <= '1';
                 when x"0D2" => aux_tx_data <= x"02"; aux_tx_wr_en <= '1';
-                when x"0D3" => aux_tx_data <= x"01"; aux_tx_wr_en <= '1';
+                when x"0D3" => aux_tx_data <= x"02"; aux_tx_wr_en <= '1';
 
                 --  Read the Adjust_Request registers
                 when x"0E0" => aux_tx_data <= x"90"; aux_tx_wr_en <= '1';
@@ -131,13 +131,20 @@ process(clk)
                 when x"0F1" => aux_tx_data <= x"01"; aux_tx_wr_en <= '1';
                 when x"0F2" => aux_tx_data <= x"02"; aux_tx_wr_en <= '1';
                 when x"0F3" => aux_tx_data <= x"00"; aux_tx_wr_en <= '1';
-                when x"0F4" => aux_tx_data <= x"02"; aux_tx_wr_en <= '1';
+                when x"0F4" => aux_tx_data <= x"22"; aux_tx_wr_en <= '1';
 
 				-- Resd lane align status for all four lanes 
                 when x"100" => aux_tx_data <= x"90"; aux_tx_wr_en <= '1';
                 when x"101" => aux_tx_data <= x"02"; aux_tx_wr_en <= '1';
                 when x"102" => aux_tx_data <= x"04"; aux_tx_wr_en <= '1';
                 when x"103" => aux_tx_data <= x"00"; aux_tx_wr_en <= '1';
+
+				-- Turn off training patterns (scrambler disabled)
+                when x"110" => aux_tx_data <= x"80"; aux_tx_wr_en <= '1';
+                when x"111" => aux_tx_data <= x"01"; aux_tx_wr_en <= '1';
+                when x"112" => aux_tx_data <= x"02"; aux_tx_wr_en <= '1';
+                when x"113" => aux_tx_data <= x"00"; aux_tx_wr_en <= '1';
+                when x"114" => aux_tx_data <= x"20"; aux_tx_wr_en <= '1';
 
 				-- Set Premp level 0, votage 0.4V
                 when x"140" => aux_tx_data <= x"80"; aux_tx_wr_en <= '1';
