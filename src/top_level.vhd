@@ -55,6 +55,22 @@ architecture Behavioral of top_level is
             data1k : out std_logic
         );
     end component;
+    
+    component scrambler is
+        port ( 
+            clk        : in  std_logic;
+            in_data0   : in  std_logic_vector(7 downto 0);
+            in_data0k  : in  std_logic;
+            in_data1   : in  std_logic_vector(7 downto 0);
+            in_data1k  : in  std_logic;
+            out_data0  : out std_logic_vector(7 downto 0);
+            out_data0k : out std_logic;
+            out_data1  : out std_logic_vector(7 downto 0);
+            out_data1k : out std_logic
+        );
+    end component;
+    
+    
 
     component data_to_8b10b is
         port ( 
@@ -352,6 +368,13 @@ architecture Behavioral of top_level is
     signal test_signal_symbol0     : std_logic_vector(9 downto 0);
     signal test_signal_symbol1     : std_logic_vector(9 downto 0);
     --
+    signal scrambled_data0      : std_logic_vector(7 downto 0);
+    signal scrambled_data0k     : std_logic;
+    signal scrambled_data1      : std_logic_vector(7 downto 0);
+    signal scrambled_data1k     : std_logic;
+    signal scrambled_symbol0     : std_logic_vector(9 downto 0);
+    signal scrambled_symbol1     : std_logic_vector(9 downto 0);
+    --
     signal ch0_data0              : std_logic_vector(7 downto 0);
     signal ch0_data0k             : std_logic;
     signal ch0_data0forceneg      : std_logic;
@@ -523,8 +546,8 @@ i_link_signal_mgmt:  link_signal_mgmt Port map (
         swing_0p8       => swing_0p8);
 
     debug_pmod(0) <= interface_debug(0);
-    debug_pmod(1) <= interface_debug(1);
-    debug_pmod(2) <= interface_debug(2);
+    debug_pmod(1) <= tx_clock_train;
+    debug_pmod(2) <= tx_align_train;
     debug_pmod(3) <= tx_powerup;
     debug_pmod(4) <= clock_locked;
     debug_pmod(5) <= equ_locked;
@@ -539,6 +562,18 @@ i_test_source : test_source port map (
             data1k => test_signal_data1k
         );
 
+i_scrambler : scrambler
+        port map ( 
+            clk        => txoutclkfabric,
+            in_data0   => test_signal_data0,
+            in_data0k  => test_signal_data0k,
+            in_data1   => test_signal_data1,
+            in_data1k  => test_signal_data1k,
+            out_data0  => scrambled_data0,
+            out_data0k => scrambled_data0k,
+            out_data1  => scrambled_data1,
+            out_data1k => scrambled_data1k
+        );
 
 i_train_channel0: training_and_channel_delay port map (
         clk             => txoutclkfabric,
@@ -567,12 +602,12 @@ i_data_to_8b10b: data_to_8b10b port map (
         data0forceneg => ch0_data0forceneg,
         data1         => ch0_data1,
         data1k        => ch0_data1k,
-        data1forceneg => ch0_data0forceneg,
+        data1forceneg => ch0_data1forceneg,
         symbol0       => ch0_symbol0,
         symbol1       => ch0_symbol1
         );
 
-
+a: if 1 = 1 generate
 i_tx0: Transceiver Port map ( 
        mgmt_clk        => clk,
        powerup_channel => powerup_channel(0),
@@ -593,7 +628,7 @@ i_tx0: Transceiver Port map (
        refclk1_n       => refclk1_n,
 
        txsymbol0      => ch0_symbol0,
-       txsymbol1      => ch0_symbol0,
+       txsymbol1      => ch0_symbol1,
                   
        gtptxp          => gtptxp,
        gtptxn          => gtptxn,
@@ -601,6 +636,6 @@ i_tx0: Transceiver Port map (
        txoutclk        => txoutclk,
        txoutclkfabric  => txoutclkfabric,
        txoutclkpcs     => txoutclkpcs);
-
+    end generate;
     
 end Behavioral;

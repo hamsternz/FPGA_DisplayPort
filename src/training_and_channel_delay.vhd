@@ -130,12 +130,12 @@ process(clk)
                                               delay_line1k(5) <= '0'; delay_line1(5) <= CODE_D11_6; delay_line1f(5) <= '0';
                 when x"4"   => state <= x"3"; delay_line0k(5) <= '1'; delay_line0(5) <= CODE_K28_5; delay_line0f(5) <= '0';
                                               delay_line1k(5) <= '0'; delay_line1(5) <= CODE_D11_6; delay_line1f(5) <= '0';
-                when x"3"   => state <= x"2"; delay_line0k(5) <= '0'; delay_line0(5) <= CODE_D11_6; delay_line0f(5) <= '0';
-                                              delay_line1k(5) <= '0'; delay_line1(5) <= CODE_D11_6; delay_line1f(5) <= '0';
-                when x"2"   => state <= x"1"; delay_line0k(5) <= '0'; delay_line0(5) <= CODE_D11_6; delay_line0f(5) <= '0';
-                                              delay_line1k(5) <= '0'; delay_line1(5) <= CODE_D11_6; delay_line1f(5) <= '0';                               
-                when x"1"   => state <= x"0"; delay_line0k(5) <= '0'; delay_line0(5) <= CODE_D11_6; delay_line0f(5) <= '0';
-                                              delay_line1k(5) <= '0'; delay_line1(5) <= CODE_D11_6; delay_line1f(5) <= '0';
+                when x"3"   => state <= x"2"; delay_line0k(5) <= '0'; delay_line0(5) <= CODE_D10_2; delay_line0f(5) <= '0';
+                                              delay_line1k(5) <= '0'; delay_line1(5) <= CODE_D10_2; delay_line1f(5) <= '0';
+                when x"2"   => state <= x"1"; delay_line0k(5) <= '0'; delay_line0(5) <= CODE_D10_2; delay_line0f(5) <= '0';
+                                              delay_line1k(5) <= '0'; delay_line1(5) <= CODE_D10_2; delay_line1f(5) <= '0';
+                when x"1"   => state <= x"0"; delay_line0k(5) <= '0'; delay_line0(5) <= CODE_D10_2; delay_line0f(5) <= '0';
+                                              delay_line1k(5) <= '0'; delay_line1(5) <= CODE_D10_2; delay_line1f(5) <= '0';
                                 if align_train = '1' then
                                     state <= x"5";
                                 elsif hold_at_state_1_shift_reg(0) = '1' then

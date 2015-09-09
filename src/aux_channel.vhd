@@ -69,7 +69,10 @@ architecture arch of aux_channel is
                     align_wait0,   align_wait1,   align_wait2,   align_wait3,
                     align_test,    align_adjust,  align_wait_after,   
                     -- Link up.
-                    switch_to_normal, link_established);
+                    switch_to_normal, link_established,
+                    --
+                    check_link, check_wait
+                    );
                     
                     
     signal state            : t_state               := error;
@@ -279,7 +282,10 @@ clk_proc: process(clK)
                                                    end if;
                                                end if;                        
                     when switch_to_normal   => state_on_success <= link_established;  
-                    when link_established   => state_on_success <= link_established;  
+                    when link_established   => state_on_success <= link_established;
+                    when check_link         => state_on_success <= check_wait;
+                    when check_wait         => state_on_success <= link_established;
+                      
                     when error              => state_on_success <= error;
 
                     when others =>
@@ -340,9 +346,10 @@ clk_proc: process(clK)
                     when align_test            => msg <= x"0D"; expected <= x"04";  status_de_active <= '1'; reset_addr_on_change <= '1';
                     when align_adjust          => msg <= x"0E"; expected <= x"03";  adjust_de_active <= '1';
                     when align_wait_after      => msg <= x"00"; expected <= x"00";
-
                     when switch_to_normal      => msg <= x"11"; expected <= x"01";
-                    when link_established      => msg <= x"00"; expected <= x"00";
+                    when link_established      => msg <= x"00"; expected <= x"00"; reset_addr_on_change <= '1';
+                    when check_link            => msg <= x"0D"; expected <= x"04"; status_de_active <= '1'; 
+                    when check_wait            => msg <= x"00"; expected <= x"00";
                     when error                 => msg <= x"00";
                     when others                => msg <= x"00";
                 end case;
@@ -381,6 +388,8 @@ clk_proc: process(clK)
                     when align_wait_after      => tx_powerup <= '1'; tx_align_train <= '1';
                     when switch_to_normal      => tx_powerup <= '1'; tx_align_train <= '1';
                     when link_established      => tx_powerup <= '1'; tx_link_established <= '1';
+                    when check_link            => tx_powerup <= '1'; tx_link_established <= '1';
+                    when check_wait            => tx_powerup <= '1'; tx_link_established <= '1';
                     when others                => NULL;
                 end case;
             end if;
@@ -441,9 +450,13 @@ clk_proc: process(clK)
             end if;
 
             -- Manage the AUX channel timeout and the retry every second                            
-            if channel_timeout = '1' or (state /= reset and pulse_per_second = '1') then
+            if channel_timeout = '1' or (state /= reset and state /= link_established and pulse_per_second = '1') then
                 next_state <= reset;
                 state      <= error;
+            end if;
+            
+            if state = link_established and pulse_per_second = '1' then
+                next_state <= check_link;
             end if;
 
             -- Manage reading from the interface FIFO
