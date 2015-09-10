@@ -32,7 +32,7 @@ architecture arch of test_source is
 
     constant VB_VS  : std_logic_vector(8 downto 0) := "000000001";   -- 0x00  VB-ID with Vertical blank asserted 
     constant VB_NVS : std_logic_vector(8 downto 0) := "000000000";   -- 0x00  VB-ID without Vertical blank asserted
-	constant Mvid   : std_logic_vector(8 downto 0) := "000000100";   -- 0x00
+	constant Mvid   : std_logic_vector(8 downto 0) := "000000010";   -- 0x00
     constant Maud   : std_logic_vector(8 downto 0) := "000000000";   -- 0x00    
 
 	constant HtotH  : std_logic_vector(8 downto 0) := "000000100";   -- Total 1056
@@ -53,7 +53,7 @@ architecture arch of test_source is
     constant VheiH  : std_logic_vector(8 downto 0) := "000000010";   -- Active lines   600    
     constant VheiL  : std_logic_vector(8 downto 0) := "001011000";   
     
-    constant MISC   : std_logic_vector(8 downto 0) := "000100000";   -- MISC - Sync, RGB, Full range, 8bpp
+    constant MISC   : std_logic_vector(8 downto 0) := "000100001";   -- MISC - Sync, RGB, Full range, 8bpp
 
 	constant MvidH  : std_logic_vector(8 downto 0) := "000000000";   -- M = 8    8/54*270MHz = 40MHz
 	constant MvidM  : std_logic_vector(8 downto 0) := "000000000";

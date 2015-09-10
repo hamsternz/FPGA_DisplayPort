@@ -386,7 +386,7 @@ clk_proc: process(clK)
                     when align_test            => tx_powerup <= '1'; tx_align_train <= '1';
                     when align_adjust          => tx_powerup <= '1'; tx_align_train <= '1';
                     when align_wait_after      => tx_powerup <= '1'; tx_align_train <= '1';
-                    when switch_to_normal      => tx_powerup <= '1'; tx_align_train <= '1';
+                    when switch_to_normal      => tx_powerup <= '1';
                     when link_established      => tx_powerup <= '1'; tx_link_established <= '1';
                     when check_link            => tx_powerup <= '1'; tx_link_established <= '1';
                     when check_wait            => tx_powerup <= '1'; tx_link_established <= '1';
@@ -472,7 +472,7 @@ clk_proc: process(clK)
             -- Manage a pulse per second reset timer
 			if pps_count = 0 then
 			  pulse_per_second <= '1';
-			  pps_count        <= to_unsigned(99999999,27);
+			  pps_count        <= to_unsigned(49999999,27);
 			else
 			  pulse_per_second <= '0';
 			  pps_count        <= pps_count - 1;

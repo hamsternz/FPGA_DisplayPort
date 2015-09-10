@@ -147,9 +147,10 @@ architecture Behavioral of top_level is
            refclk1_p       : in  STD_LOGIC;
            refclk1_n       : in  STD_LOGIC;
 
-           TXOUTCLK       : out STD_LOGIC;
-           TXOUTCLKFABRIC : out STD_LOGIC;
-           TXOUTCLKPCS    : out STD_LOGIC;
+--           TXOUTCLK       : out STD_LOGIC;
+--           TXOUTCLKFABRIC : out STD_LOGIC;
+--           TXOUTCLKPCS    : out STD_LOGIC;
+           symbolclk    : out STD_LOGIC;
            
            txsymbol0      : in  std_logic_vector(9 downto 0);
            txsymbol1      : in  std_logic_vector(9 downto 0);
@@ -338,10 +339,11 @@ architecture Behavioral of top_level is
     ---------------------------------------------
     signal txresetdone      : std_logic := '0';
     signal txoutclk         : std_logic := '0';
-    signal txoutclkfabric   : std_logic := '0';
-    signal txoutclkpcs      : std_logic := '0';
-    signal txusrclk         : std_logic := '0';
-    signal txusrclk2        : std_logic := '0';
+--    signal txoutclkfabric   : std_logic := '0';
+--    signal txoutclkpcs      : std_logic := '0';
+--    signal txusrclk         : std_logic := '0';
+--    signal txusrclk2        : std_logic := '0';
+    signal symbolclk        : std_logic := '0';
     
     signal tx_running       : std_logic := '0';
 
@@ -564,8 +566,8 @@ i_link_signal_mgmt:  link_signal_mgmt Port map (
     debug_pmod(6) <= symbol_locked;
     debug_pmod(7) <= align_locked;
 
-i_test_source : idle_pattern port map ( 
-            clk    => txoutclkfabric,
+i_test_source : test_source port map ( 
+            clk    => symbolclk,
             data0  => test_signal_data0,
             data0k => test_signal_data0k,
             data1  => test_signal_data1,
@@ -574,7 +576,7 @@ i_test_source : idle_pattern port map (
 
 i_scrambler : scrambler
         port map ( 
-            clk        => txoutclkfabric,
+            clk        => symbolclk,
             in_data0   => test_signal_data0,
             in_data0k  => test_signal_data0k,
             in_data1   => test_signal_data1,
@@ -586,7 +588,7 @@ i_scrambler : scrambler
         );
 
 i_train_channel0: training_and_channel_delay port map (
-        clk             => txoutclkfabric,
+        clk             => symbolclk,
 
         channel_delay   => "00",
         clock_train     => tx_clock_train,
@@ -606,7 +608,7 @@ i_train_channel0: training_and_channel_delay port map (
     );
 
 i_data_to_8b10b: data_to_8b10b port map ( 
-        clk           => txoutclkfabric,
+        clk           => symbolclk,
         data0         => ch0_data0,
         data0k        => ch0_data0k,
         data0forceneg => ch0_data0forceneg,
@@ -617,7 +619,6 @@ i_data_to_8b10b: data_to_8b10b port map (
         symbol1       => ch0_symbol1
         );
 
-a: if 1 = 1 generate
 i_tx0: Transceiver Port map ( 
        mgmt_clk        => clk,
        powerup_channel => powerup_channel(0),
@@ -642,10 +643,9 @@ i_tx0: Transceiver Port map (
                   
        gtptxp          => gtptxp,
        gtptxn          => gtptxn,
-       
-       txoutclk        => txoutclk,
-       txoutclkfabric  => txoutclkfabric,
-       txoutclkpcs     => txoutclkpcs);
-    end generate;
+       symbolclk       => symbolclk);       
+--       txoutclk        => txoutclk,
+--       txoutclkfabric  => txoutclkfabric,
+--       txoutclkpcs     => txoutclkpcs);
     
 end Behavioral;

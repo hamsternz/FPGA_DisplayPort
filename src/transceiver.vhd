@@ -45,9 +45,10 @@ entity Transceiver is
            refclk1_p       : in  STD_LOGIC;
            refclk1_n       : in  STD_LOGIC;
 
-           TXOUTCLK       : out STD_LOGIC;
-           TXOUTCLKFABRIC : out STD_LOGIC;
-           TXOUTCLKPCS    : out STD_LOGIC;
+--           TXOUTCLK       : out STD_LOGIC;
+--          TXOUTCLKFABRIC : out STD_LOGIC;
+--          TXOUTCLKPCS    : out STD_LOGIC;
+           symbolclk    : out STD_LOGIC;
            
            txsymbol0      : in  std_logic_vector(9 downto 0);
            txsymbol1      : in  std_logic_vector(9 downto 0);
@@ -113,10 +114,11 @@ architecture Behavioral of transceiver is
     signal tx_out_clk          : STD_LOGIC;
     signal tx_out_clk_buffered : STD_LOGIC;
 begin
-    TXOUTCLKFABRIC <= ref_clk_fabric;
+--    TXOUTCLKFABRIC <= ref_clk_fabric;
     TXUSRCLK       <= tx_out_clk_buffered;
     TXUSRCLK2      <= tx_out_clk_buffered;
-    TXOUTCLK       <= tx_out_clk_buffered;
+--    TXOUTCLK       <= tx_out_clk_buffered;
+    symbolclk    <= tx_out_clk_buffered;
     
     preemp_level <= "10100" when preemp_6p0 = '1' else   -- +6.0 db from table 3-30 in UG476
                     "01101" when preemp_3p5 = '1' else   -- +3.5 db
@@ -859,7 +861,7 @@ gtpe2_i : GTPE2_CHANNEL
         ----------- Transmit Ports - TX Fabric Clock Output Control Ports ----------
         TXOUTCLK                        =>      tx_out_clk,
         TXOUTCLKFABRIC                  =>      ref_clk_fabric, --txoutclkfabric,
-        TXOUTCLKPCS                     =>      txoutclkpcs,
+        TXOUTCLKPCS                     =>      open,
         TXOUTCLKSEL                     =>      "010",
         TXRATEDONE                      =>      open,
         --------------------- Transmit Ports - TX Gearbox Ports --------------------

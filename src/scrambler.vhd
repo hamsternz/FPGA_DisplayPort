@@ -26,8 +26,7 @@ entity scrambler is
 end entity;
 
 architecture arch of scrambler is
-    signal   be_count : unsigned(8 downto 0) := (others => '0');
-    constant BE       : std_logic_vector(8 downto 0) := "111111011";   -- K27.7
+    signal   bs_count : unsigned(8 downto 0) := (others => '0');
     constant BS       : std_logic_vector(8 downto 0) := "110111100";   -- K28.5
     constant SR       : std_logic_vector(8 downto 0) := "100011100";   -- K28.0
 begin
@@ -41,21 +40,21 @@ process(clk)
             out_data1k <= in_data1k;
             
             ------------------------------------------------
-            -- Subsitute every 511th Blank start (BS) symbol
+            -- Subsitute every 513nd Blank start (BS) symbol
             -- with a Scrambler Reset (SR) symbol. 
             ------------------------------------------------
             if in_data0k = '1' and in_data0 = BS(7 downto 0) then
-                if be_count = 511 then
+                if bs_count = 511 then
                     out_data0 <= SR(7 downto 0);
                 end if;
-                be_count <= be_count + 1;
+                bs_count <= bs_count + 1;
             end if;
 
             if in_data1k = '1' and in_data1 = BS(7 downto 0) then
-                if be_count = 511 then
+                if bs_count = 511 then
                     out_data1 <= SR(7 downto 0);
                 end if;
-                be_count <= be_count + 1;
+                bs_count <= bs_count + 1;
             end if;
         end if;
     end process;
