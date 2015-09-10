@@ -55,6 +55,16 @@ architecture Behavioral of top_level is
             data1k : out std_logic
         );
     end component;
+
+    component idle_pattern is
+        port ( 
+            clk    : in  std_logic;
+            data0  : out std_logic_vector(7 downto 0);
+            data0k : out std_logic;
+            data1  : out std_logic_vector(7 downto 0);
+            data1k : out std_logic
+        );
+    end component;
     
     component scrambler is
         port ( 
@@ -554,7 +564,7 @@ i_link_signal_mgmt:  link_signal_mgmt Port map (
     debug_pmod(6) <= symbol_locked;
     debug_pmod(7) <= align_locked;
 
-i_test_source : test_source port map ( 
+i_test_source : idle_pattern port map ( 
             clk    => txoutclkfabric,
             data0  => test_signal_data0,
             data0k => test_signal_data0k,
