@@ -18,8 +18,8 @@ architecture arch of idle_pattern is
     constant BE     : std_logic_vector(8 downto 0) := "111111011";   -- K27.7
     constant BS     : std_logic_vector(8 downto 0) := "110111100";   -- K28.5
     constant DUMMY  : std_logic_vector(8 downto 0) := "000000011";   -- 0x3
-    constant VB_ID  : std_logic_vector(8 downto 0) := "000001000";   -- 0x00  VB-ID with no video asserted 
-	constant Mvid   : std_logic_vector(8 downto 0) := "000000100";   -- 0x00
+    constant VB_ID  : std_logic_vector(8 downto 0) := "000001001";   -- 0x00  VB-ID with no video asserted 
+	constant Mvid   : std_logic_vector(8 downto 0) := "000000000";   -- 0x00
     constant Maud   : std_logic_vector(8 downto 0) := "000000000";   -- 0x00    
 
     signal d0: std_logic_vector(8 downto 0);

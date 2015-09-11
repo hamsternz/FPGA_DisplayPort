@@ -13,7 +13,7 @@ entity test_source is
 end test_source;
 
 architecture arch of test_source is 
-    type a_test_data_blocks is array (0 to 64*6-1) of std_logic_vector(8 downto 0);
+    type a_test_data_blocks is array (0 to 64*7-1) of std_logic_vector(8 downto 0);
     
     constant DUMMY  : std_logic_vector(8 downto 0) := "000000011";   -- 0xAA
     constant SPARE  : std_logic_vector(8 downto 0) := "011111111";   -- 0xFF
@@ -135,7 +135,19 @@ architecture arch of test_source is
     MAUD,  DUMMY, DUMMY, DUMMY, DUMMY, DUMMY, 
 	DUMMY, DUMMY, DUMMY, DUMMY, DUMMY, DUMMY, 
 	DUMMY, DUMMY, DUMMY, DUMMY, DUMMY, DUMMY, 
-	SPARE, SPARE, SPARE, SPARE, SPARE, SPARE, SPARE, SPARE, SPARE, SPARE);
+	SPARE, SPARE, SPARE, SPARE, SPARE, SPARE, SPARE, SPARE, SPARE, SPARE,
+
+	--- Block 6 - just blank end
+	DUMMY, DUMMY, DUMMY, DUMMY, DUMMY, DUMMY, 
+    DUMMY, DUMMY, DUMMY, DUMMY, DUMMY, DUMMY, 
+    DUMMY, DUMMY, DUMMY, DUMMY, DUMMY, DUMMY,
+	DUMMY, DUMMY, DUMMY, DUMMY, DUMMY, DUMMY, 
+    DUMMY, DUMMY, DUMMY, DUMMY, DUMMY, DUMMY, 
+	DUMMY, DUMMY, DUMMY, DUMMY, DUMMY, DUMMY, 
+    DUMMY, DUMMY, DUMMY, DUMMY, DUMMY, DUMMY, 
+    DUMMY, DUMMY, DUMMY, DUMMY, DUMMY, DUMMY,
+	DUMMY, DUMMY, DUMMY, DUMMY, DUMMY, BE,  
+	SPARE, SPARE, SPARE, SPARE, SPARE, SPARE, SPARE, SPARE, SPARE, SPARE); 
 
     signal index : unsigned (8 downto 0) := (others => '0');  -- Index up to 8 x 64 symbol blocks
     signal d0: std_logic_vector(8 downto 0);
@@ -177,7 +189,7 @@ process(clk)
                     end if;
                 elsif line_count < 599 then -- lines of active video (except first and last)
                     if row_count = 0 then
-                        index(8 downto 6) <= "001";  -- Dummy Main stream attribues plus BE                        
+                        index(8 downto 6) <= "110";  -- just BE                        
                     elsif row_count < 100 then
                         index(8 downto 6) <= "010";  -- Pixels plus fill
                     elsif row_count = 100 then
@@ -187,7 +199,7 @@ process(clk)
                     end if;
                 elsif line_count = 599 then  -- Last line of active video
                     if row_count = 0 then
-                        index(8 downto 6) <= "001";  -- Dummy Main stream attribues plus BE                        
+                        index(8 downto 6) <= "110";  -- just BE                        
                     elsif row_count < 100 then
                         index(8 downto 6) <= "010";  -- Pixels plus fill
                     elsif row_count = 100 then

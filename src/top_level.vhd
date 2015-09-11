@@ -66,7 +66,7 @@ architecture Behavioral of top_level is
         );
     end component;
     
-    component scrambler is
+    component scrambler_reset_inserter is
         port ( 
             clk        : in  std_logic;
             in_data0   : in  std_logic_vector(7 downto 0);
@@ -80,8 +80,22 @@ architecture Behavioral of top_level is
         );
     end component;
     
+    component scrambler is
+        port ( 
+            clk        : in  std_logic;
+            bypass0    : in  std_logic;
+            bypass1    : in  std_logic;
+            in_data0   : in  std_logic_vector(7 downto 0);
+            in_data0k  : in  std_logic;
+            in_data1   : in  std_logic_vector(7 downto 0);
+            in_data1k  : in  std_logic;
+            out_data0  : out std_logic_vector(7 downto 0);
+            out_data0k : out std_logic;
+            out_data1  : out std_logic_vector(7 downto 0);
+            out_data1k : out std_logic
+        );
+    end component;
     
-
     component data_to_8b10b is
         port ( 
             clk           : in  std_logic;
@@ -334,6 +348,7 @@ architecture Behavioral of top_level is
     signal tx_clock_train   : std_logic := '0';
     signal tx_align_train   : std_logic := '0';    
     signal data_channel_0   : std_logic_vector(19 downto 0):= (others => '0');
+
     ---------------------------------------------
     -- Transceiver signals
     ---------------------------------------------
@@ -373,13 +388,19 @@ architecture Behavioral of top_level is
     signal debug       : std_logic_vector(7 downto 0);
     signal test_signal : std_logic_vector(8 downto 0);
 
+    signal scramble_bypass        : std_logic;
     signal test_signal_data0      : std_logic_vector(7 downto 0);
     signal test_signal_data0k     : std_logic;
     signal test_signal_data1      : std_logic_vector(7 downto 0);
     signal test_signal_data1k     : std_logic;
-    signal test_signal_symbol0     : std_logic_vector(9 downto 0);
-    signal test_signal_symbol1     : std_logic_vector(9 downto 0);
-    --
+--    signal test_signal_symbol0     : std_logic_vector(9 downto 0);
+--    signal test_signal_symbol1     : std_logic_vector(9 downto 0);
+
+    signal sr_inserted_data0      : std_logic_vector(7 downto 0);
+    signal sr_inserted_data0k     : std_logic;
+    signal sr_inserted_data1      : std_logic_vector(7 downto 0);
+    signal sr_inserted_data1k     : std_logic;
+    
     signal scrambled_data0      : std_logic_vector(7 downto 0);
     signal scrambled_data0k     : std_logic;
     signal scrambled_data1      : std_logic_vector(7 downto 0);
@@ -566,7 +587,8 @@ i_link_signal_mgmt:  link_signal_mgmt Port map (
     debug_pmod(6) <= symbol_locked;
     debug_pmod(7) <= align_locked;
 
-i_test_source : test_source port map ( 
+--i_test_source : test_source port map ( 
+i_test_source : idle_pattern port map ( 
             clk    => symbolclk,
             data0  => test_signal_data0,
             data0k => test_signal_data0k,
@@ -574,13 +596,31 @@ i_test_source : test_source port map (
             data1k => test_signal_data1k
         );
 
-i_scrambler : scrambler
+i_scrambler_reset_inserter : scrambler_reset_inserter
         port map ( 
             clk        => symbolclk,
             in_data0   => test_signal_data0,
             in_data0k  => test_signal_data0k,
             in_data1   => test_signal_data1,
             in_data1k  => test_signal_data1k,
+            out_data0  => sr_inserted_data0,
+            out_data0k => sr_inserted_data0k,
+            out_data1  => sr_inserted_data1,
+            out_data1k => sr_inserted_data1k
+        );
+
+        -- Bypass the scrambler for the test pattens.
+        
+        scramble_bypass <= tx_clock_train or tx_align_train;  
+i_scrambler : scrambler
+        port map ( 
+            clk        => symbolclk,
+            bypass0    => scramble_bypass,
+            bypass1    => scramble_bypass,
+            in_data0   => sr_inserted_data0,
+            in_data0k  => sr_inserted_data0k,
+            in_data1   => sr_inserted_data1,
+            in_data1k  => sr_inserted_data1k,
             out_data0  => scrambled_data0,
             out_data0k => scrambled_data0k,
             out_data1  => scrambled_data1,
