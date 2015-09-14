@@ -25,6 +25,8 @@ entity aux_channel is
 		   aux_data            : out   std_logic_vector(7 downto 0);
 		   ------------------------------
 		   link_count          : in    std_logic_vector(2 downto 0);
+           hpd_irq             : in    std_logic;
+           hpd_present         : in    std_logic;
 		   ------------------------------
 		   tx_powerup          : out   std_logic := '0';
 		   tx_clock_train      : out   std_logic := '0';
@@ -56,7 +58,7 @@ architecture arch of aux_channel is
                     edid_block0, edid_block1, edid_block2, edid_block3,
                     edid_block4, edid_block5, edid_block6, edid_block7,
                     -- Gathering display Port information
-                    read_rev, read_registers,
+                    read_sink_count, read_registers,
                     -- Link configuration states 
                     set_channel_coding, set_speed_270, set_downspread, set_link_count_1, set_link_count_2, set_link_count_4, 
                     -- Link training - clock recovery
@@ -200,8 +202,8 @@ clk_proc: process(clK)
                     when edid_block4        => state_on_success <= edid_block5;
                     when edid_block5        => state_on_success <= edid_block6;
                     when edid_block6        => state_on_success <= edid_block7;
-                    when edid_block7        => state_on_success <= read_rev;
-                    when read_rev           => state_on_success <= read_registers;        
+                    when edid_block7        => state_on_success <= read_sink_count;
+                    when read_sink_count    => state_on_success <= read_registers;        
                     when read_registers     => state_on_success <= set_channel_coding;
                     when set_channel_coding => state_on_success <= set_speed_270;                        
                     when set_speed_270      => state_on_success <= set_downspread;                        
@@ -311,7 +313,7 @@ clk_proc: process(clK)
                     when edid_block6           => msg <= x"02"; expected <= x"11"; edid_de_active <= '1';
                     when edid_block7           => msg <= x"02"; expected <= x"11"; edid_de_active <= '1';
                     
-                    when read_rev              => msg <= x"03"; expected <= x"02"; reset_addr_on_change <= '1';
+                    when read_sink_count       => msg <= x"03"; expected <= x"02"; reset_addr_on_change <= '1';
                     when read_registers        => msg <= x"04"; expected <= x"0D"; dp_reg_de_active <= '1';
                     when set_channel_coding    => msg <= x"06"; expected <= x"01"; 
                     when set_speed_270         => msg <= x"07"; expected <= x"01"; 

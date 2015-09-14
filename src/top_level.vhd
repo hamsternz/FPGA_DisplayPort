@@ -46,6 +46,13 @@ entity top_level is
 end top_level;
 
 architecture Behavioral of top_level is
+    component hotplug_decode is
+        port (clk     : in  std_logic;
+              hpd     : in  std_logic;
+              irq     : out std_logic := '0';
+              present : out std_logic := '0');
+    end component;
+
     component test_source is
         port ( 
             clk    : in  std_logic;
@@ -185,7 +192,12 @@ architecture Behavioral of top_level is
            aux_addr            : out   std_logic_vector(7 downto 0);
 		   aux_data            : out   std_logic_vector(7 downto 0);
 		   ------------------------------
-           link_count          : in    std_logic_vector(2 downto 0);
+           link_count          : in    std_logic_vector(2 downto 0);           
+		   ------------------------------
+		   -- Hot plug signals
+           hpd_irq             : in std_logic;
+           hpd_present         : in std_logic;
+
 		   ------------------------------
 		   swing_0p4           : in    std_logic;
            swing_0p6           : in    std_logic;
@@ -354,10 +366,6 @@ architecture Behavioral of top_level is
     ---------------------------------------------
     signal txresetdone      : std_logic := '0';
     signal txoutclk         : std_logic := '0';
---    signal txoutclkfabric   : std_logic := '0';
---    signal txoutclkpcs      : std_logic := '0';
---    signal txusrclk         : std_logic := '0';
---    signal txusrclk2        : std_logic := '0';
     signal symbolclk        : std_logic := '0';
     
     signal tx_running       : std_logic := '0';
@@ -417,6 +425,8 @@ architecture Behavioral of top_level is
     signal ch0_data1k             : std_logic;
     signal ch0_data1forceneg      : std_logic;
     signal ch0_symbol1            : std_logic_vector(9 downto 0);
+    signal hpd_irq     : std_logic;
+    signal hpd_present : std_logic;
 
 begin
 process(clk)
@@ -446,7 +456,13 @@ process(clk)
             end case;
         end if;
     end process;
-    
+
+i_hotplug_decode: hotplug_decode port map (
+        clk => clk,
+        hpd     => dp_tx_hp_detect,
+        irq     => hpd_irq,
+        present => hpd_present);
+
 i_aux_channel: aux_channel port map ( 
 		   clk             => clk,
 		   debug_pmod      => interface_debug,
@@ -459,7 +475,9 @@ i_aux_channel: aux_channel port map (
 		   aux_data        => aux_data,
 		   ------------------------------
 		   link_count      => active_channel_count,
-
+           hpd_irq         => hpd_irq,
+           hpd_present     => hpd_present,
+		   ------------------------------
            preemp_0p0      => preemp_0p0, 
            preemp_3p5      => preemp_3p5,
            preemp_6p0      => preemp_6p0,           
@@ -587,8 +605,8 @@ i_link_signal_mgmt:  link_signal_mgmt Port map (
     debug_pmod(6) <= symbol_locked;
     debug_pmod(7) <= align_locked;
 
---i_test_source : test_source port map ( 
-i_test_source : idle_pattern port map ( 
+i_test_source : test_source port map ( 
+--i_test_source : idle_pattern port map ( 
             clk    => symbolclk,
             data0  => test_signal_data0,
             data0k => test_signal_data0k,
@@ -611,7 +629,7 @@ i_scrambler_reset_inserter : scrambler_reset_inserter
 
         -- Bypass the scrambler for the test pattens.
         
-        scramble_bypass <= tx_clock_train or tx_align_train;  
+        scramble_bypass <= '1'; -- tx_clock_train or tx_align_train;  
 i_scrambler : scrambler
         port map ( 
             clk        => symbolclk,
@@ -684,8 +702,4 @@ i_tx0: Transceiver Port map (
        gtptxp          => gtptxp,
        gtptxn          => gtptxn,
        symbolclk       => symbolclk);       
---       txoutclk        => txoutclk,
---       txoutclkfabric  => txoutclkfabric,
---       txoutclkpcs     => txoutclkpcs);
-    
 end Behavioral;

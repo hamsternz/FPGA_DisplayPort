@@ -46,7 +46,7 @@ process(clk)
 				when x"022" => aux_tx_data <= x"50"; aux_tx_wr_en <= '1';
 				when x"023" => aux_tx_data <= x"0F"; aux_tx_wr_en <= '1';
 
-				-- Read DP Version
+				-- Read Sink count
            		when x"030" => aux_tx_data <= x"90"; aux_tx_wr_en <= '1';
 				when x"031" => aux_tx_data <= x"02"; aux_tx_wr_en <= '1';
 				when x"032" => aux_tx_data <= x"00"; aux_tx_wr_en <= '1';
@@ -67,8 +67,8 @@ process(clk)
 
 				-- Set channel coding (8b/10b)
            		when x"060" => aux_tx_data <= x"80"; aux_tx_wr_en <= '1';
-				when x"061" => aux_tx_data <= x"06"; aux_tx_wr_en <= '1';
-				when x"062" => aux_tx_data <= x"00"; aux_tx_wr_en <= '1';
+				when x"061" => aux_tx_data <= x"01"; aux_tx_wr_en <= '1';
+				when x"062" => aux_tx_data <= x"08"; aux_tx_wr_en <= '1';
 				when x"063" => aux_tx_data <= x"00"; aux_tx_wr_en <= '1';
 				when x"064" => aux_tx_data <= x"01"; aux_tx_wr_en <= '1';
 
@@ -139,7 +139,7 @@ process(clk)
                 when x"102" => aux_tx_data <= x"04"; aux_tx_wr_en <= '1';
                 when x"103" => aux_tx_data <= x"00"; aux_tx_wr_en <= '1';
 
-				-- Turn off training patterns (scrambler disabled)
+				-- Turn off training patterns
                 when x"110" => aux_tx_data <= x"80"; aux_tx_wr_en <= '1';
                 when x"111" => aux_tx_data <= x"01"; aux_tx_wr_en <= '1';
                 when x"112" => aux_tx_data <= x"02"; aux_tx_wr_en <= '1';
