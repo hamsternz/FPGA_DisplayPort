@@ -13,7 +13,7 @@ entity idle_pattern is
 end idle_pattern;
 
 architecture arch of idle_pattern is 
-    signal count : unsigned(12 downto 0) := (others => '1');    
+    signal count : unsigned(12 downto 0) := (others => '0');    
 
     constant BE     : std_logic_vector(8 downto 0) := "111111011";   -- K27.7
     constant BS     : std_logic_vector(8 downto 0) := "110111100";   -- K28.5
@@ -21,6 +21,7 @@ architecture arch of idle_pattern is
     constant VB_ID  : std_logic_vector(8 downto 0) := "000001001";   -- 0x00  VB-ID with no video asserted 
 	constant Mvid   : std_logic_vector(8 downto 0) := "000000000";   -- 0x00
     constant Maud   : std_logic_vector(8 downto 0) := "000000000";   -- 0x00    
+    constant D102   : std_logic_vector(8 downto 0) := "001001010";   -- D10.2
 
     signal d0: std_logic_vector(8 downto 0);
     signal d1: std_logic_vector(8 downto 0);
@@ -55,6 +56,12 @@ process(clk)
             elsif count = 12 then
                 d0 <= Maud;
                 d1 <= DUMMY;
+            elsif count = 24 then
+                d0 <= DUMMY;
+                d1 <= D102;
+            elsif count = 26 then
+                d0 <= D102;
+                d1 <= DUMMY;           
             else
                 d0 <= DUMMY;
                 d1 <= DUMMY;

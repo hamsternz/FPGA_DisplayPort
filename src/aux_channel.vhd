@@ -25,6 +25,7 @@ entity aux_channel is
 		   aux_data            : out   std_logic_vector(7 downto 0);
 		   ------------------------------
 		   link_count          : in    std_logic_vector(2 downto 0);
+		   ------------------------------
            hpd_irq             : in    std_logic;
            hpd_present         : in    std_logic;
 		   ------------------------------
@@ -82,7 +83,7 @@ architecture arch of aux_channel is
     signal state_on_success : t_state               := error;
     signal pulse_per_second : std_logic             := '0';
 	signal pps_count        : unsigned(26 downto 0) := (9=>'1',others => '0');   
-    signal count_100us      : unsigned(14 downto 0) := to_unsigned(4000,15);
+    signal count_100us      : unsigned(14 downto 0) := to_unsigned(1000,15);
     component dp_aux_messages is
 	port ( clk          : in  std_logic;
 		   -- Interface to send messages
@@ -187,11 +188,19 @@ i_channel: aux_interface port map (
 clk_proc: process(clK)
 	begin
 		if rising_edge(clk) then
+		    -------------------------------------------
 		    -- Are we going to change state this cycle?
+		    -------------------------------------------
             msg_de <= '0';
             if next_state /= state then
+                -------------------------------------------------------------
+                -- Get ready to count how many reply bytes have been received
+                -------------------------------------------------------------
                 rx_byte_count <= (others => '0');
-                -- Controlling where we go next
+                
+                ---------------------------------------------------
+                -- Controlling which FSM state to go to on success
+                ---------------------------------------------------
                 case next_state is
                     when reset              => state_on_success <= check_presence;
                     when check_presence     => state_on_success <= edid_block0;                        
@@ -286,14 +295,23 @@ clk_proc: process(clK)
                     when switch_to_normal   => state_on_success <= link_established;  
                     when link_established   => state_on_success <= link_established;
                     when check_link         => state_on_success <= check_wait;
-                    when check_wait         => state_on_success <= link_established;
-                      
+                    when check_wait         => if clock_locked  = '1' and equ_locked = '1' and symbol_locked = '1' and align_locked = '1' then
+                                                  state_on_success <= link_established;
+                                               else
+                                                  state_on_success <= error;
+                                               end if; 
                     when error              => state_on_success <= error;
 
                     when others =>
                 end case;
 
-                -- Controlling what message will be sent, how many words are expected back and where it will be routed.
+                ------------------------------------------------------------
+                -- Controlling what message will be sent, how many words are 
+                -- expected back, and where it will be routed
+                --
+                -- NOTE: If you set 'expected' incorrectly then bytes will
+                --       get left in the RX FIFO, corrupting things
+                ------------------------------------------------------------
                 msg_de           <= '1';
                 status_de_active <= '0';
                 adjust_de_active <= '0';
@@ -327,7 +345,7 @@ clk_proc: process(clK)
                     when clock_voltage_0p6     => msg <= x"16"; expected <= x"01";
                     when clock_voltage_0p8     => msg <= x"18"; expected <= x"01";
                     when clock_wait            => msg <= x"00"; expected <= x"00";  reset_addr_on_change <= '1';
-                    when clock_test            => msg <= x"0D"; expected <= x"04";  status_de_active <= '1'; reset_addr_on_change <= '1';
+                    when clock_test            => msg <= x"0D"; expected <= x"09";  status_de_active <= '1'; reset_addr_on_change <= '1';
                     when clock_adjust          => msg <= x"0E"; expected <= x"03";  adjust_de_active <= '1';
                     when clock_wait_after      => msg <= x"00"; expected <= x"00"; 
                     
@@ -345,18 +363,21 @@ clk_proc: process(clK)
                     when align_wait1           => msg <= x"00"; expected <= x"00";
                     when align_wait2           => msg <= x"00"; expected <= x"00";
                     when align_wait3           => msg <= x"00"; expected <= x"00";  reset_addr_on_change <= '1';
-                    when align_test            => msg <= x"0D"; expected <= x"04";  status_de_active <= '1'; reset_addr_on_change <= '1';
+                    when align_test            => msg <= x"0D"; expected <= x"09";  status_de_active <= '1'; reset_addr_on_change <= '1';
                     when align_adjust          => msg <= x"0E"; expected <= x"03";  adjust_de_active <= '1';
                     when align_wait_after      => msg <= x"00"; expected <= x"00";
                     when switch_to_normal      => msg <= x"11"; expected <= x"01";
                     when link_established      => msg <= x"00"; expected <= x"00"; reset_addr_on_change <= '1';
-                    when check_link            => msg <= x"0D"; expected <= x"04"; status_de_active <= '1'; 
+                    when check_link            => msg <= x"0D"; expected <= x"09"; status_de_active <= '1'; 
                     when check_wait            => msg <= x"00"; expected <= x"00";
                     when error                 => msg <= x"00";
                     when others                => msg <= x"00";
                 end case;
 
-                -- Controlling the state for the transceivers 
+                --------------------------------------------------------
+                -- Set the control signals the state for the link state,  
+                -- transceivers andmain channel pipeline 
+                --------------------------------------------------------
                 tx_powerup   <= '0'; 
                 tx_clock_train <= '0'; 
                 tx_align_train <= '0'; 
@@ -396,6 +417,11 @@ clk_proc: process(clK)
                 end case;
             end if;
 
+            --------------------------------------------------------
+            -- Manage the small timer that counts how long we have 
+            -- been in the current state (used for implementing 
+            -- short waits for some FSM states) 
+            --------------------------------------------------------
             if state = next_state then
                 count_100us <= count_100us - 1;
             else
@@ -406,11 +432,22 @@ clk_proc: process(clK)
             end if;
             state <= next_state;
             
-            --- Has the 100us pause expired?            
+            -------------------------------------------------------------
+            -- How a short wait is implemented...
+            --
+            -- Has the 100us pause expired, when no data was expected?
+            -- If so, move to the next test.            
+            -------------------------------------------------------------
             if expected = x"00" and count_100us(count_100us'high) = '1' then
                 next_state <= state_on_success;
             end if;
             
+            --------------------------------------------------------------
+            -- Processing the data that has been received from the sink
+            -- over the AUX channel. The data bytes are just streamed out
+            -- to a downstream component that uses the values, and may 
+            -- set flags that feed back in to control the FSM.
+            --------------------------------------------------------------
             edid_de    <= '0';
             adjust_de  <= '0';
             dp_reg_de  <= '0';                                
@@ -423,15 +460,39 @@ clk_proc: process(clK)
                     end if;
                                         
                     if rx_byte_count = x"00" then
-                        -- Is the Ack missing? 
+                        --------------------------------------------------
+                        -- Is the Ack missing? This doesn't work correctly
+                        -- if only byte is expected, as it gets overwritten 
+                        -- by the following 'if' statement.
+                        --
+                        -- Do not change this behaviour, by what it should do
+                        -- is test for "In progress" or "Again" requests, and 
+                        -- retry the current operation.
+                        ------------------------------------------------------ 
                         if aux_rx_data /= x"00" then  
                             next_state <= error;
                         end if;
-                        if rx_byte_count = expected-1 then
+                        if rx_byte_count = expected-1 and aux_rx_empty = '1' then
                             next_state <= state_on_success;
                         end if;
+--                      ----------------------------------------------
+--                      -- Has the Sink indicated that we should retry
+--                      -- the current command, to allow the sink time
+--                      -- to process the request?
+--                      --
+--                      -- This only works if there is just one byte
+--                      -- in the FIFO. This only works for DPCD
+--                      -- transactions that aeert "AUX DEFER"
+--                      ----------------------------------------------
+--                      if aux_rx_data = x"20" then
+--                          -- just flip states to force a retry.
+--                          state      <= state_on_success;
+--                          next_state <= state;  
+--                      end if;
                     else
-                        -- Process the none-ack byte, routing it out using the DE signals
+                        -------------------------------------------------------------------
+                        -- Process a non-ack data byte, routing it out using the DE signals
+                        -------------------------------------------------------------------
                         edid_de    <= edid_de_active;
                         adjust_de  <= adjust_de_active;
                         dp_reg_de  <= dp_reg_de_active;                                
@@ -441,7 +502,7 @@ clk_proc: process(clK)
                         aux_addr   <= std_logic_vector(aux_addr_i);
                         aux_addr_i <= aux_addr_i+1;                        
                         
-                        if rx_byte_count = expected-1 then
+                        if rx_byte_count = expected-1 and aux_rx_empty = '1' then
                             next_state <= state_on_success;
                             if reset_addr_on_change = '1' then
                                 aux_addr_i <= (others => '0'); 
@@ -451,17 +512,28 @@ clk_proc: process(clK)
                 end if;
             end if;
 
-            -- Manage the AUX channel timeout and the retry every second                            
+            -----------------------------------------------------
+            -- Manage the AUX channel timeout and the retry to  
+            -- establish a link. 
+            -------------------------------------------------------------                            
             if channel_timeout = '1' or (state /= reset and state /= link_established and pulse_per_second = '1') then
                 next_state <= reset;
                 state      <= error;
             end if;
             
+            -------------------------------------------------
+            -- If the link was established, then every 
+            -- now and then check the state of the link  
+            -------------------------------------------------
             if state = link_established and pulse_per_second = '1' then
                 next_state <= check_link;
             end if;
 
-            -- Manage reading from the interface FIFO
+            -------------------------------------------------
+            -- If the full message has been received, then 
+            -- read any waiting data out of the FIFO.
+            -- Also update the count of bytes read.
+            -------------------------------------------------
             if channel_busy = '0' and aux_rx_empty = '0' then
                 just_read_from_rx <= '1';
             else                
@@ -471,9 +543,12 @@ clk_proc: process(clK)
                 rx_byte_count <= rx_byte_count+1;
             end if;
 
-            -- Manage a pulse per second reset timer
+            -----------------------------------------
+            -- Manage the reset timer
+            -----------------------------------------
 			if pps_count = 0 then
 			  pulse_per_second <= '1';
+			  -- PPS actually became a 2Hz pulse....
 			  pps_count        <= to_unsigned(49999999,27);
 			else
 			  pulse_per_second <= '0';

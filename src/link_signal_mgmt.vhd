@@ -102,9 +102,9 @@ process(mgmt_clk)
             -----------------------------------------------
             if status_de = '1' then
                 case addr is 
-                    when x"00" => channel_state( 7 downto  0) <= data;
-                    when x"01" => channel_state(15 downto  8) <= data;                                  
-                    when x"02" => channel_state(23 downto 16) <= data;                                  
+                    when x"02" => channel_state( 7 downto  0) <= data;
+                    when x"03" => channel_state(15 downto  8) <= data;                                  
+                    when x"04" => channel_state(23 downto 16) <= data;                                  
                     when others => NULL;
                 end case;
             end if;

@@ -167,6 +167,7 @@ process(clk)
             d0   <= test_data_blocks(to_integer(index+0));
             d1   <= test_data_blocks(to_integer(index+1));
             if index(5 downto 0) = 52 then
+                index(5 downto 0) <= (others => '0');
                 if row_count = 131 then 
                     row_count <= (others => '0');
                     if line_count = 627 then
@@ -219,7 +220,6 @@ process(clk)
                         index(8 downto 6) <= "000";  -- Dummy symbols
                     end if;
                 end if;
-                index(5 downto 0) <= (others => '0');
             else
                 index <= index + 2;
             end if;

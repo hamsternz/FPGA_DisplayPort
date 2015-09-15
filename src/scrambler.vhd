@@ -54,7 +54,7 @@ process(clk)
             if in_data0k = '1' or bypass0 = '1' then
                 -- Bypass the scrambler for 'K' symbols (but still update LFSR state!)
                 out_data0  <= in_data0;
-                out_data0k <= '1';
+                out_data0k <= in_data0k;
             else
                 out_data0(0) <= in_data0(0) xor s0(15);
                 out_data0(1) <= in_data0(1) xor s0(14);
@@ -95,7 +95,7 @@ process(clk)
             if in_data1k = '1' or bypass1 = '1' then
                 -- Bypass the scrambler for 'K' symbols (but still update LFSR state!)
                 out_data1  <= in_data1;
-                out_data1k <= '1';
+                out_data1k <= in_data1k;
             else
                 -- Scramble symbol 1
                 out_data1(0) <= in_data1(0) xor s1(15);
@@ -110,7 +110,7 @@ process(clk)
             end if; 
 
             -- Update scrambler state
-            if in_data0k = '1' and in_data0 = SR then
+            if in_data1k = '1' and in_data1 = SR then
                 lfsr_state <= x"FFFF";    
             else
                 lfsr_state(0)  <= s1(8);

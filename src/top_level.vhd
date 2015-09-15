@@ -432,7 +432,7 @@ begin
 process(clk)
     begin
         if rising_edge(clk) then
-            if status_de = '1' and aux_addr = x"00" then
+            if status_de = '1' and aux_addr = x"02" then
                debug <= aux_data;
             end if;
             case switches(4 downto 0) is
