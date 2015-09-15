@@ -64,9 +64,7 @@ architecture arch of training_and_channel_delay is
     signal delay_line1   : a_delay_line  := (others => (others => '0'));
     signal delay_line1k  : a_delay_lineb := (others => '0');
     signal delay_line1f  : a_delay_lineb := (others => '0');
-    
-    signal  hold_at_state_1_shift_reg : std_logic_vector(3 downto 0) := (others => '1');
-begin
+ begin
     with channel_delay select out_data0  <= delay_line0(5) when "00",
                                             delay_line0(6) when "01",     
                                             delay_line0(7) when "10",     
@@ -119,9 +117,9 @@ process(clk)
            
            -- Do we ened to hold at state 1 until valid data has filtered down the delay line?
            if align_train = '1' or clock_train = '1' then
-               hold_at_state_1_shift_reg <= (others => '1');
+               hold_at_state_1 <= (others => '1');
             else
-               hold_at_state_1_shift_reg <= '0' & hold_at_state_1_shift_reg(hold_at_state_1_shift_reg'high downto 1);
+               hold_at_state_1 <= '0' & hold_at_state_1(hold_at_state_1'high downto 1);
             end if;
             
             -- Do we need to overwrite the data in slot 5 with the sync patterns?
@@ -138,13 +136,13 @@ process(clk)
                                               delay_line1k(5) <= '0'; delay_line1(5) <= CODE_D10_2; delay_line1f(5) <= '0';
                                 if align_train = '1' then
                                     state <= x"5";
-                                elsif hold_at_state_1_shift_reg(0) = '1' then
+                                elsif hold_at_state_1(0) = '1' then
                                     state <= x"1";
                                 end if;
                 when others => state <= x"0";
                                 if align_train = '1' then
                                     state <= x"5";
-                                elsif hold_at_state_1_shift_reg(0) = '1' then
+                                elsif hold_at_state_1(0) = '1' then
                                     state <= x"1";
                                 end if;
              end case;                
