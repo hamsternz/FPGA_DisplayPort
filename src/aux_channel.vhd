@@ -475,20 +475,20 @@ clk_proc: process(clK)
                         if rx_byte_count = expected-1 and aux_rx_empty = '1' then
                             next_state <= state_on_success;
                         end if;
---                      ----------------------------------------------
---                      -- Has the Sink indicated that we should retry
---                      -- the current command, to allow the sink time
---                      -- to process the request?
---                      --
---                      -- This only works if there is just one byte
---                      -- in the FIFO. This only works for DPCD
---                      -- transactions that aeert "AUX DEFER"
---                      ----------------------------------------------
---                      if aux_rx_data = x"20" then
---                          -- just flip states to force a retry.
---                          state      <= state_on_success;
---                          next_state <= state;  
---                      end if;
+                        ----------------------------------------------
+                        -- Has the Sink indicated that we should retry
+                        -- the current command, to allow the sink time
+                        -- to process the request?
+                        --
+                        -- This only works if there is just one byte
+                        -- in the FIFO. This only works for DPCD
+                        -- transactions that aeert "AUX DEFER"
+                        ----------------------------------------------
+                        if aux_rx_data = x"20" then
+                           -- just flip states to force a retry.
+                            state      <= state_on_success;
+                            next_state <= state;  
+                        end if;
                     else
                         -------------------------------------------------------------------
                         -- Process a non-ack data byte, routing it out using the DE signals

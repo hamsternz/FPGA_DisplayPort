@@ -34,11 +34,12 @@ begin
 process(clk)
     begin
         if rising_edge(clk) then
-            out_data0  <= in_data0;
             out_data0k <= in_data0k;
-            out_data1  <= in_data1;
-            out_data1k <= in_data1k;
+            out_data0  <= in_data0;
             
+            out_data1k <= in_data1k;
+            out_data1  <= in_data1;
+
             ------------------------------------------------
             -- Subsitute every 513nd Blank start (BS) symbol
             -- with a Scrambler Reset (SR) symbol. 
@@ -58,6 +59,4 @@ process(clk)
             end if;
         end if;
     end process;
-end architecture; 
-
-
+end architecture;

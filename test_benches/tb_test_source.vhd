@@ -6,15 +6,35 @@ entity tb_test_source is
 end entity;
 
 architecture arch of tb_test_source is
-	component test_source is
-	    port ( 
-	        clk    : in  std_logic;
-	        data0  : out std_logic_vector(7 downto 0);
-	        data0k : out std_logic;
-	        data1  : out std_logic_vector(7 downto 0);
-	        data1k : out std_logic
-	    );
-	end component;
+    component test_source is
+        port ( 
+            clk          : in  std_logic;
+            ready        : out std_logic;
+            data0        : out std_logic_vector(7 downto 0);
+            data0k       : out std_logic;
+            data1        : out std_logic_vector(7 downto 0);
+            data1k       : out std_logic;
+            switch_point : out std_logic
+        );
+    end component;
+
+    component idle_pattern_inserter is
+        port ( 
+            clk              : in  std_logic;
+            channel_ready    : in  std_logic;
+            source_ready     : in  std_logic;
+            in_data0         : in  std_logic_vector(7 downto 0);
+            in_data0k        : in  std_logic;
+            in_data1         : in  std_logic_vector(7 downto 0);
+            in_data1k        : in  std_logic;
+            in_switch_point  : in  std_logic;
+
+            out_data0        : out std_logic_vector(7 downto 0);
+            out_data0k       : out std_logic;
+            out_data1        : out std_logic_vector(7 downto 0);
+            out_data1k       : out std_logic
+        );
+    end component;    
 	
     component scrambler_reset_inserter is
         port ( 
@@ -92,11 +112,19 @@ architecture arch of tb_test_source is
 	    );
     end component;
  	
-	signal clk    : std_logic;
-	signal test_signal_data0  : std_logic_vector(7 downto 0);
-    signal test_signal_data0k : std_logic;
-    signal test_signal_data1  : std_logic_vector(7 downto 0);
-    signal test_signal_data1k : std_logic;
+	signal clk                       : std_logic;
+
+	signal test_signal_data0         : std_logic_vector(7 downto 0);
+    signal test_signal_data0k        : std_logic;
+    signal test_signal_data1         : std_logic_vector(7 downto 0);
+    signal test_signal_data1k        : std_logic;
+    signal test_signal_switch_point  : std_logic;
+    signal test_signal_ready         : std_logic;
+
+    signal signal_data0              : std_logic_vector(7 downto 0);
+    signal signal_data0k             : std_logic;
+    signal signal_data1              : std_logic_vector(7 downto 0);
+    signal signal_data1k             : std_logic;
 
 	signal sr_inserted_data0  : std_logic_vector(7 downto 0);
     signal sr_inserted_data0k : std_logic;
@@ -119,23 +147,45 @@ architecture arch of tb_test_source is
     signal ch0_data1forceneg      : std_logic;
     signal ch0_symbol1            : std_logic_vector(9 downto 0);
     
-    signal dec0            : std_logic_vector(8 downto 0);                 
+    signal dec0            : std_logic_vector(8 downto 0);
+    
+    signal rd : unsigned(9 downto 0) := (others => '0');
+                     
 begin
-uut: test_source port map ( 
-	        clk    => clk,
-	        data0  => test_signal_data0,
-	        data0k => test_signal_data0k,
-	        data1  => test_signal_data1,
-	        data1k => test_signal_data1k
-	    );
+i_test_source: test_source port map ( 
+            clk          => clk,
+            ready        => test_signal_ready,
+            data0        => test_signal_data0,
+            data0k       => test_signal_data0k,
+            data1        => test_signal_data1,
+            data1k       => test_signal_data1k,
+            switch_point => test_signal_switch_point
+        );
+
+i_idle_pattern_inserter: idle_pattern_inserter  port map ( 
+            clk             => clk,
+            channel_ready   => '1',
+            source_ready    => test_signal_ready,
+            
+            in_data0        => test_signal_data0,
+            in_data0k       => test_signal_data0k,
+            in_data1        => test_signal_data1,
+            in_data1k       => test_signal_data1k,
+            in_switch_point => test_signal_switch_point,
+
+            out_data0        => signal_data0,
+            out_data0k       => signal_data0k,
+            out_data1        => signal_data1,
+            out_data1k       => signal_data1k
+        );
 
 i_scrambler_reset_inserter : scrambler_reset_inserter
         port map ( 
             clk        => clk,
-            in_data0   => test_signal_data0,
-            in_data0k  => test_signal_data0k,
-            in_data1   => test_signal_data1,
-            in_data1k  => test_signal_data1k,
+            in_data0   => signal_data0,
+            in_data0k  => signal_data0k,
+            in_data1   => signal_data1,
+            in_data1k  => signal_data1k,
             out_data0  => sr_inserted_data0,
             out_data0k => sr_inserted_data0k,
             out_data1  => sr_inserted_data1,
@@ -192,6 +242,33 @@ i_data_to_8b10b: data_to_8b10b port map (
         symbol1       => ch0_symbol1
         );
 
+process(clK)
+    begin
+        if rising_edge(clk) then
+            rd <= rd  - to_unsigned(10,10)
+                + unsigned(ch0_symbol0(0 downto 0))
+                + unsigned(ch0_symbol0(1 downto 1))
+                + unsigned(ch0_symbol0(2 downto 2))
+                + unsigned(ch0_symbol0(3 downto 3))
+                + unsigned(ch0_symbol0(4 downto 4))
+                + unsigned(ch0_symbol0(5 downto 5))
+                + unsigned(ch0_symbol0(6 downto 6))
+                + unsigned(ch0_symbol0(7 downto 7))
+                + unsigned(ch0_symbol0(8 downto 8))
+                + unsigned(ch0_symbol0(9 downto 9))
+                + unsigned(ch0_symbol1(0 downto 0))
+                + unsigned(ch0_symbol1(1 downto 1))
+                + unsigned(ch0_symbol1(2 downto 2))
+                + unsigned(ch0_symbol1(3 downto 3))
+                + unsigned(ch0_symbol1(4 downto 4))
+                + unsigned(ch0_symbol1(5 downto 5))
+                + unsigned(ch0_symbol1(6 downto 6))
+                + unsigned(ch0_symbol1(7 downto 7))
+                + unsigned(ch0_symbol1(8 downto 8))
+                + unsigned(ch0_symbol1(9 downto 9));                
+        end if;
+    end process;
+    
 data_dec0: dec_8b10b port map (
 		RESET => '0',
 		RBYTECLK => clk,

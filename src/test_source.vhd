@@ -5,10 +5,12 @@ use IEEE.NUMERIC_STD.ALL;
 entity test_source is
     port ( 
         clk    : in  std_logic;
+        ready  : out std_logic;
         data0  : out std_logic_vector(7 downto 0);
         data0k : out std_logic;
         data1  : out std_logic_vector(7 downto 0);
-        data1k : out std_logic
+        data1k : out std_logic;
+        switch_point : out std_logic
     );
 end test_source;
 
@@ -156,6 +158,7 @@ architecture arch of test_source is
     signal line_count : unsigned(9 downto 0) := (others => '0');
     signal row_count  : unsigned(7 downto 0) := (others => '0');
 begin
+    ready   <= '1';
     data0   <= d0(7 downto 0);
     data0k  <= d0(8);
     data1   <= d1(7 downto 0);
@@ -166,6 +169,7 @@ process(clk)
         if rising_edge(clk) then
             d0   <= test_data_blocks(to_integer(index+0));
             d1   <= test_data_blocks(to_integer(index+1));
+            switch_point <= '0';
             if index(5 downto 0) = 52 then
                 index(5 downto 0) <= (others => '0');
                 if row_count = 131 then 
@@ -209,11 +213,16 @@ process(clk)
                     else
                         index(8 downto 6) <= "000";  -- Dummy symbols
                     end if;
-                else                        
+                else
+                    -----------------------------------------------------------------
+                    -- Allow switching to/from the idle pattern duein the vertical blank
+                    -----------------------------------------------------------------                        
                     if row_count = 0 then
                         index(8 downto 6) <= "000";  -- Dummy symbols                        
+                        switch_point <= '1';
                     elsif row_count < 100 then
                         index(8 downto 6) <= "000";  -- Dummy symbols
+                        switch_point <= '1';
                     elsif row_count = 100 then
                         index(8 downto 6) <= "101";  -- Dummy symbols, BS and VS-ID block (with VBLANK flag)                        
                     else
@@ -223,7 +232,6 @@ process(clk)
             else
                 index <= index + 2;
             end if;
-        end if;
-            
+        end if;            
      end process;
 end architecture;

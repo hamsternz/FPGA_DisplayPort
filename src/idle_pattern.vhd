@@ -4,11 +4,12 @@ use IEEE.NUMERIC_STD.ALL;
 
 entity idle_pattern is
     port ( 
-        clk    : in  std_logic;
-        data0  : out std_logic_vector(7 downto 0);
-        data0k : out std_logic;
-        data1  : out std_logic_vector(7 downto 0);
-        data1k : out std_logic
+        clk          : in  std_logic;
+        data0        : out std_logic_vector(7 downto 0);
+        data0k       : out std_logic;
+        data1        : out std_logic_vector(7 downto 0);
+        data1k       : out std_logic;
+        switch_point : out std_logic
     );
 end idle_pattern;
 
@@ -35,36 +36,39 @@ begin
 process(clk)
      begin
         if rising_edge(clk) then
+            switch_point <= '0';
             if count = 0 then
+                d0 <= DUMMY;
+                d1 <= DUMMY;
+            elsif count = 2 then
                 d0 <= BS;
                 d1 <= VB_ID;
-            elsif count = 2 then
+            elsif count = 4 then
                 d0 <= Mvid;
                 d1 <= Maud;
-            elsif count = 4 then
+            elsif count = 6 then
                 d0 <= VB_ID;
                 d1 <= Mvid;
-            elsif count = 6 then
+            elsif count = 7 then
                 d0 <= Maud;
                 d1 <= VB_ID;
-            elsif count = 8 then
+            elsif count = 10 then
                 d0 <= Mvid;
                 d1 <= Maud;
-            elsif count = 10 then
+            elsif count = 12 then
                 d0 <= VB_ID;
                 d1 <= Mvid;
-            elsif count = 12 then
+            elsif count = 14 then
                 d0 <= Maud;
                 d1 <= DUMMY;
-            elsif count = 24 then
-                d0 <= DUMMY;
-                d1 <= D102;
-            elsif count = 26 then
-                d0 <= D102;
-                d1 <= DUMMY;           
+            elsif count = 16 then
+                d0 <= Maud;
+                d1 <= DUMMY;
             else
                 d0 <= DUMMY;
                 d1 <= DUMMY;
+                switch_point <= '1';   -- can switch to the actual video at any other time  
+                                       -- other than when the BS, VB-ID, Mvid, Maud sequence
             end if; 
             count <= count + 2;
         end if;

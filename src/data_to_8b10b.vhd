@@ -642,7 +642,7 @@ process(clk)
                     current_disparity_neg <= '1' XOR disparity1_odd_1;  
                 end if;     
             else
-                if data1forceneg = '1'  then
+                if data1forceneg = '0'  then
                     disparity0_neg_2      <= '1';
                     disparity1_neg_2      <= '1' XOR disparity0_odd_1;
                     current_disparity_neg <= '1' XOR disparity0_odd_1 XOR disparity1_odd_1;  
