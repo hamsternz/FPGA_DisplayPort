@@ -1,3 +1,6 @@
+A table of the 8B/10B codes, used to
+Generate the 8B/10B encoder tables.
+
      [K/D]&data  Neg Code   Pos Code
 D00.0 000000000 1001110100 0110001011
 D01.0 000000001 0111010100 1000101011

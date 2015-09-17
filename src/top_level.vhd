@@ -1,22 +1,53 @@
 ----------------------------------------------------------------------------------
--- Company: 
--- Engineer: 
--- 
--- Create Date: 17.08.2015 22:35:35
--- Design Name: 
 -- Module Name: top_level - Behavioral
--- Project Name: 
--- Target Devices: 
--- Tool Versions: 
--- Description: 
--- 
--- Dependencies: 
--- 
--- Revision:
--- Revision 0.01 - File Created
--- Additional Comments:
+--
+-- Description: Top level of my DisplayPort design.
 -- 
 ----------------------------------------------------------------------------------
+-- FPGA_DisplayPort from https://github.com/hamsternz/FPGA_DisplayPort
+------------------------------------------------------------------------------------
+-- The MIT License (MIT)
+-- 
+-- Copyright (c) 2015 Michael Alan Field <hamster@snap.net.nz>
+-- 
+-- Permission is hereby granted, free of charge, to any person obtaining a copy
+-- of this software and associated documentation files (the "Software"), to deal
+-- in the Software without restriction, including without limitation the rights
+-- to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+-- copies of the Software, and to permit persons to whom the Software is
+-- furnished to do so, subject to the following conditions:
+-- 
+-- The above copyright notice and this permission notice shall be included in
+-- all copies or substantial portions of the Software.
+-- 
+-- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+-- IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+-- FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+-- AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+-- LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+-- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+-- THE SOFTWARE.
+------------------------------------------------------------------------------------
+----- Want to say thanks? ----------------------------------------------------------
+------------------------------------------------------------------------------------
+--
+-- This design has taken many hours - 3 months of work. I'm more than happy
+-- to share it if you can make use of it. It is released under the MIT license,
+-- so you are not under any onus to say thanks, but....
+-- 
+-- If you what to say thanks for this design either drop me an email, or how about 
+-- trying PayPal to my email (hamster@snap.net.nz)?
+--
+--  Educational use - Enough for a beer
+--  Hobbyist use    - Enough for a pizza
+--  Research use    - Enough to take the family out to dinner
+--  Commercial use  - A weeks pay for an engineer (I wish!)
+--------------------------------------------------------------------------------------
+--  Ver | Date       | Change
+--------+------------+---------------------------------------------------------------
+--  0.1 | 2015-09-17 | Initial Version
+------------------------------------------------------------------------------------
+
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 
@@ -443,11 +474,15 @@ architecture Behavioral of top_level is
 
     constant BE     : std_logic_vector(8 downto 0) := "111111011";   -- K27.7
     constant BS     : std_logic_vector(8 downto 0) := "110111100";   -- K28.5
+    constant SR     : std_logic_vector(8 downto 0) := "100011100";   -- K28.0
 
 begin
 process(symbolclk)
     begin
         if rising_edge(symbolclk) then
+            if (ch0_data0k & ch0_data0) = SR or (ch0_data1k & ch0_data1) = SR then
+                debug_pmod(6) <= '1';
+            end if;
             if (ch0_data0k & ch0_data0) = BS or (ch0_data1k & ch0_data1) = BS then
                 debug_pmod(6) <= '1';
             end if;
@@ -658,8 +693,7 @@ i_scrambler_reset_inserter : scrambler_reset_inserter
         );
 
         -- Bypass the scrambler for the test pattens.
-        
-        scramble_bypass <= '1'; -- tx_clock_train or tx_align_train;  
+        scramble_bypass <= tx_clock_train or tx_align_train;  
 i_scrambler : scrambler
         port map ( 
             clk        => symbolclk,
