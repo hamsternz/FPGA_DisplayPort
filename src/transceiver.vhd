@@ -76,9 +76,6 @@ entity Transceiver is
            refclk1_p       : in  STD_LOGIC;
            refclk1_n       : in  STD_LOGIC;
 
---           TXOUTCLK       : out STD_LOGIC;
---          TXOUTCLKFABRIC : out STD_LOGIC;
---          TXOUTCLKPCS    : out STD_LOGIC;
            symbolclk    : out STD_LOGIC;
            
            txsymbol0      : in  std_logic_vector(9 downto 0);
