@@ -86,7 +86,9 @@ architecture arch of idle_pattern_inserter is
 
     signal idle_d0: std_logic_vector(8 downto 0);
     signal idle_d1: std_logic_vector(8 downto 0);
-    
+    signal channel_ready_i    : std_logic;
+    signal channel_ready_meta : std_logic;
+        
 begin
 
 process(clk) 
@@ -120,7 +122,7 @@ process(clk)
             -- If either the source drops or the channel is not ready, then reset
             -- to emitting the idle pattern. 
             ------------------------------------------------------------------------
-            if channel_ready = '0' or (source_ready = '0' and source_ready_last = '1') then
+            if channel_ready_i = '0' or (source_ready = '0' and source_ready_last = '1') then
                 count_to_switch <= (others => '0');
             end if;
             source_ready_last  <= source_ready;
@@ -201,6 +203,10 @@ process(clk)
                     idle_count <= to_unsigned(1,idle_count'length);
                 end if; 
             end if; 
+
+            channel_ready_i     <= channel_ready_meta; 
+            channel_ready_meta  <= channel_ready;
+
         end if;
     end process;
 end architecture;

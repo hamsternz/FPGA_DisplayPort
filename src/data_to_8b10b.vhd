@@ -54,6 +54,7 @@
 --  Ver | Date       | Change
 --------+------------+---------------------------------------------------------------
 --  0.1 | 2015-09-17 | Initial Version
+--  0.2 | 2015-09-18 | Move bit reordering into the transceiver
 ------------------------------------------------------------------------------------
 
 library IEEE;
@@ -634,17 +635,8 @@ architecture arch of data_to_8b10b is
         "1000010111", "0111101000",  -- K30.7
         "XXXXXXXXXX", "XXXXXXXXXX"   -- K31.7
         );
-    signal symbol0_i  : std_logic_vector(9 downto 0) := (others => '0');
-    signal symbol1_i  : std_logic_vector(9 downto 0) := (others => '0');
 
 begin
-    -----------------------------------------------------------
-    -- Flip the order of bits as we send MSB first!
-    -----------------------------------------------------------
-g0: for i in 0 to 9 generate
-        symbol0(i) <= symbol0_i(9-i); 
-        symbol1(i) <= symbol1_i(9-i); 
-    end generate;
 
 process(clk)
     variable index0 : unsigned(8 downto 0);
@@ -658,14 +650,14 @@ process(clk)
             index0 := unsigned(data0_2 & disparity0_neg_2);
             index1 := unsigned(data1_2 & disparity1_neg_2);
             if data0k_2 = '1' then
-                symbol0_i <= k_symbols(to_integer(index0));
+                symbol0 <= k_symbols(to_integer(index0));
             else
-                symbol0_i <= d_symbols(to_integer(index0));
+                symbol0 <= d_symbols(to_integer(index0));
             end if;
             if data1k_2 = '1' then
-                symbol1_i <= k_symbols(to_integer(index1));
+                symbol1 <= k_symbols(to_integer(index1));
             else
-                symbol1_i <= d_symbols(to_integer(index1));
+                symbol1 <= d_symbols(to_integer(index1));
             end if;
 
             -----------------------------------------------------------

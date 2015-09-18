@@ -47,6 +47,7 @@
 --  Ver | Date       | Change
 --------+------------+---------------------------------------------------------------
 --  0.1 | 2015-09-17 | Initial Version
+--  0.2 | 2015-09-17 | Syncrhonise txresetdone to remove timing errors
 ------------------------------------------------------------------------------------
 ----------------------------------------------------------------
 -- Transceiver and channel PLL control
@@ -107,6 +108,8 @@ architecture arch of gtx_tx_reset_controller is
     signal ref_clk_detect_last : std_logic := '0';
     signal ref_clk_detect      : std_logic := '0';
     signal ref_clk_detect_meta : std_logic := '0';
+    signal txresetdone_meta    : std_logic := '0';
+    signal txresetdone_i       : std_logic := '0';
 begin
 
 process(ref_clk)
@@ -168,7 +171,7 @@ process(clk)
 
                 when x"7" => 
                     txuserrdy <= '1';
-                    if txresetdone = '1' then
+                    if txresetdone_i = '1' then
                         state <= x"8";
                     end if;
 
@@ -187,6 +190,10 @@ process(clk)
             ref_clk_detect_last <= ref_clk_detect;
             ref_clk_detect      <= ref_clk_detect_meta;
             ref_clk_detect_meta <= ref_clk_counter(ref_clk_counter'high);
+            
+            txresetdone_i    <= txresetdone_meta;
+            txresetdone_meta <= txresetdone;
+
         end if;
     end process;
 end architecture;

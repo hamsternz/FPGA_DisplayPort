@@ -49,6 +49,7 @@
 --  Ver | Date       | Change
 --------+------------+---------------------------------------------------------------
 --  0.1 | 2015-09-17 | Initial Version
+--  0.2 | 2015-09-18 | Resolve clock domain crossing issues
 ------------------------------------------------------------------------------------
 
 
@@ -102,9 +103,12 @@ entity training_and_channel_delay is
 end training_and_channel_delay;
 
 architecture arch of training_and_channel_delay is    
-    signal state            : std_logic_vector(3 downto 0)  := "0000";
-    
-    signal hold_at_state_1 : std_logic_vector(9 downto 0) := "1111111111";
+    signal state             : std_logic_vector(3 downto 0)  := "0000";
+    signal clock_train_meta  : std_logic := '0';
+    signal clock_train_i     : std_logic := '0';
+    signal align_train_meta  : std_logic := '0';
+    signal align_train_i     : std_logic := '0';
+    signal hold_at_state_one : std_logic_vector(9 downto 0) := "1111111111";
     constant CODE_K28_5    : std_logic_vector(7 downto 0) := "10111100";
     constant CODE_D11_6    : std_logic_vector(7 downto 0) := "11001011";
     constant CODE_D10_2    : std_logic_vector(7 downto 0) := "01001010";
@@ -169,10 +173,10 @@ process(clk)
            delay_line1f(0)      <= '0';
            
            -- Do we ened to hold at state 1 until valid data has filtered down the delay line?
-           if align_train = '1' or clock_train = '1' then
-               hold_at_state_1 <= (others => '1');
+           if align_train_i = '1' or clock_train_i = '1' then
+               hold_at_state_one <= (others => '1');
             else
-               hold_at_state_1 <= '0' & hold_at_state_1(hold_at_state_1'high downto 1);
+               hold_at_state_one <= '0' & hold_at_state_one(hold_at_state_one'high downto 1);
             end if;
             
             -- Do we need to overwrite the data in slot 5 with the sync patterns?
@@ -187,18 +191,22 @@ process(clk)
                                               delay_line1k(5) <= '0'; delay_line1(5) <= CODE_D10_2; delay_line1f(5) <= '0';
                 when x"1"   => state <= x"0"; delay_line0k(5) <= '0'; delay_line0(5) <= CODE_D10_2; delay_line0f(5) <= '0';
                                               delay_line1k(5) <= '0'; delay_line1(5) <= CODE_D10_2; delay_line1f(5) <= '0';
-                                if align_train = '1' then
+                                if align_train_i = '1' then
                                     state <= x"5";
-                                elsif hold_at_state_1(0) = '1' then
+                                elsif hold_at_state_one(0) = '1' then
                                     state <= x"1";
                                 end if;
                 when others => state <= x"0";
-                                if align_train = '1' then
+                                if align_train_i = '1' then
                                     state <= x"5";
-                                elsif hold_at_state_1(0) = '1' then
+                                elsif hold_at_state_one(0) = '1' then
                                     state <= x"1";
                                 end if;
-             end case;                
+             end case;
+             clock_train_meta <= clock_train;
+             clock_train_i    <= clock_train_meta;
+             align_train_meta <= align_train;
+             align_train_i    <= align_train_meta;                
         end if;
     end process;
 end architecture;

@@ -47,6 +47,7 @@
 --  Ver | Date       | Change
 --------+------------+---------------------------------------------------------------
 --  0.1 | 2015-09-17 | Initial Version
+--  0.2 | 2015-09-18 | Move bit reordering here from the 8b/10b encoder
 ------------------------------------------------------------------------------------
 
 
@@ -183,9 +184,10 @@ i_gtx_tx_reset_controller: gtx_tx_reset_controller
 
     -------------  GT txdata_i Assignments for 20 bit datapath  -------  
 
-    txchardispmode  <= "00"    & txsymbol1(9)          & txsymbol0(9);
-    txchardispval   <= "00"    & txsymbol1(8)          & txsymbol0(8);
-    txdata_for_tx   <= x"0000" & txsymbol1(7 downto 0) & txsymbol0(7 downto 0);
+    txchardispmode  <= "00"    & txsymbol1(0)          & txsymbol0(0);
+    txchardispval   <= "00"    & txsymbol1(1)          & txsymbol0(1);
+    txdata_for_tx   <= x"0000" & txsymbol1(2) & txsymbol1(3) & txsymbol1(4) & txsymbol1(5) & txsymbol1(6) & txsymbol1(7) & txsymbol1(8) & txsymbol1(9)
+                               & txsymbol0(2) & txsymbol0(3) & txsymbol0(4) & txsymbol0(5) & txsymbol0(6) & txsymbol0(7) & txsymbol0(8) & txsymbol0(9);
     TXCHARISK       <= "0000";              
 
 I_IBUFDS_GTE2_0 : IBUFDS_GTE2  

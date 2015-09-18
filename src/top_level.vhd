@@ -93,6 +93,79 @@ architecture Behavioral of top_level is
         );
     end component;
 
+    component insert_main_stream_attrbutes is
+    port (
+        clk                  : std_logic;
+        -----------------------------------------------------
+        -- This determines how the MSA is packed
+        -----------------------------------------------------      
+        active_channels      : std_logic_vector(1 downto 0);
+        -----------------------------------------------------
+        -- The MSA values (some are range reduced and could 
+        -- be 16 bits ins size)
+        -----------------------------------------------------      
+        M_value              : in std_logic_vector(23 downto 0);
+        N_value              : in std_logic_vector(23 downto 0);
+        H_visible            : in std_logic_vector(11 downto 0);
+        V_visible            : in std_logic_vector(11 downto 0);
+        H_front_porch        : in std_logic_vector(11 downto 0);
+        V_front_porch        : in std_logic_vector(11 downto 0);
+        H_sync_width         : in std_logic_vector(11 downto 0);
+        V_sync_width         : in std_logic_vector(11 downto 0);
+        H_back_porch         : in std_logic_vector(11 downto 0);
+        V_back_porch         : in std_logic_vector(11 downto 0);
+        H_vsync_active_high  : in std_logic;
+        V_vsync_active_high  : in std_logic;
+        flag_sync_clock      : in std_logic;
+        flag_YCCnRGB         : in std_logic;
+        flag_422n444         : in std_logic;
+        flag_range_reduced   : in std_logic;
+        flag_interlaced_Even : in std_logic;
+        flags_3d_Indicators  : in std_logic_vector(11 downto 0);
+        bits_per_colour      : in std_logic_vector(5 downto 0);
+        -----------------------------------------------------
+        -- The stream of pixel data coming in
+        -----------------------------------------------------
+        in_switch_point      : in  std_logic;
+        in_ch0_data0k        : in  std_logic;
+        in_ch0_data0         : in  std_logic_vector(7 downto 0);
+        in_ch0_data1k        : in  std_logic;
+        in_ch0_data1         : in  std_logic_vector(7 downto 0);
+        in_ch1_data0k        : in  std_logic;
+        in_ch1_data0         : in  std_logic_vector(7 downto 0);
+        in_ch1_data1k        : in  std_logic;
+        in_ch1_data1         : in  std_logic_vector(7 downto 0);
+        in_ch2_data0k        : in  std_logic;
+        in_ch2_data0         : in  std_logic_vector(7 downto 0);
+        in_ch2_data1k        : in  std_logic;
+        in_ch2_data1         : in  std_logic_vector(7 downto 0);
+        in_ch3_data0k        : in  std_logic;
+        in_ch3_data0         : in  std_logic_vector(7 downto 0);
+        in_ch3_data1k        : in  std_logic;
+        in_ch3_data1         : in  std_logic_vector(7 downto 0);
+        -----------------------------------------------------
+        -- The stream of pixel data going out
+        -----------------------------------------------------
+        out_switch_point      : out std_logic                    := '0';
+        out_ch0_data0k        : out std_logic                    := '0';
+        out_ch0_data0         : out std_logic_vector(7 downto 0) := (others => '0');
+        out_ch0_data1k        : out std_logic                    := '0';
+        out_ch0_data1         : out std_logic_vector(7 downto 0) := (others => '0');
+        out_ch1_data0k        : out std_logic                    := '0';
+        out_ch1_data0         : out std_logic_vector(7 downto 0) := (others => '0');
+        out_ch1_data1k        : out std_logic                    := '0';
+        out_ch1_data1         : out std_logic_vector(7 downto 0) := (others => '0');
+        out_ch2_data0k        : out std_logic                    := '0';
+        out_ch2_data0         : out std_logic_vector(7 downto 0) := (others => '0');
+        out_ch2_data1k        : out std_logic                    := '0';
+        out_ch2_data1         : out std_logic_vector(7 downto 0) := (others => '0');
+        out_ch3_data0k        : out std_logic                    := '0';
+        out_ch3_data0         : out std_logic_vector(7 downto 0) := (others => '0');
+        out_ch3_data1k        : out std_logic                    := '0';
+        out_ch3_data1         : out std_logic_vector(7 downto 0) := (others => '0'));
+    end component;
+
+
     component idle_pattern_inserter is
         port ( 
             clk              : in  std_logic;
@@ -692,13 +765,11 @@ i_scrambler_reset_inserter : scrambler_reset_inserter
             out_data1k => sr_inserted_data1k
         );
 
-        -- Bypass the scrambler for the test pattens.
-        scramble_bypass <= tx_clock_train or tx_align_train;  
 i_scrambler : scrambler
         port map ( 
             clk        => symbolclk,
-            bypass0    => scramble_bypass,
-            bypass1    => scramble_bypass,
+            bypass0    => '0',
+            bypass1    => '0',
             in_data0   => sr_inserted_data0,
             in_data0k  => sr_inserted_data0k,
             in_data1   => sr_inserted_data1,
