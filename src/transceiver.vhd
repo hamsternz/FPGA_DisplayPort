@@ -59,7 +59,7 @@ use UNISIM.VComponents.all;
 
 entity Transceiver is
     Port ( mgmt_clk        : in  STD_LOGIC;
-           powerup_channel : in  STD_LOGIC;
+           powerup_channel : in  STD_LOGIC_VECTOR;
 
            preemp_0p0      : in  STD_LOGIC;
            preemp_3p5      : in  STD_LOGIC;
@@ -69,7 +69,7 @@ entity Transceiver is
            swing_0p6       : in  STD_LOGIC;
            swing_0p8       : in  STD_LOGIC;
 
-           tx_running      : out STD_LOGIC;
+           tx_running      : out STD_LOGIC_VECTOR;
 
            refclk0_p       : in  STD_LOGIC;
            refclk0_n       : in  STD_LOGIC;
@@ -78,17 +78,17 @@ entity Transceiver is
            refclk1_n       : in  STD_LOGIC;
 
            symbolclk       : out STD_LOGIC;
-           in_symbols      : in  std_logic_vector(19 downto 0);
+           in_symbols      : in  std_logic_vector(79 downto 0);
            
-           gtptxp         : out std_logic;
-           gtptxn         : out std_logic);
+           gtptxp         : out std_logic_vector;
+           gtptxn         : out std_logic_vector);
 end transceiver;
 
 architecture Behavioral of transceiver is
-    signal txchardispmode :   std_logic_vector(3 downto 0);
-    signal txchardispval  :   std_logic_vector(3 downto 0);
-    signal txdata_for_tx  :   std_logic_vector(31 downto 0);
-    signal TXCHARISK      : STD_LOGIC_VECTOR(3 downto 0) := (others => '0');
+
+    signal txchardispmode :   std_logic_vector( 4*gtptxp'length-1 downto 0) := (others => '0');
+    signal txchardispval  :   std_logic_vector( 4*gtptxp'length-1 downto 0) := (others => '0');
+    signal txdata_for_tx  :   std_logic_vector( 32*gtptxp'length-1 downto 0);
     
     component gtx_tx_reset_controller is
     port (  clk             : in  std_logic;
@@ -109,17 +109,17 @@ architecture Behavioral of transceiver is
 
     signal refclk0        : std_logic;
     signal refclk1        : std_logic;
-    signal ref_clk_fabric : std_logic; -- need to connect;
-    signal txreset        : std_logic;
-    signal txresetdone    : std_logic;
-    signal txpcsreset     : std_logic;
-    signal txpmareset     : std_logic;
-    signal txuserrdy      : std_logic;
-    signal pll0pd         : std_logic;
-    signal pll0reset      : std_logic;
-    signal pll0locken     : std_logic;
+    signal ref_clk_fabric : std_logic_vector(gtptxp'high downto 0); -- need to connect;
+    signal txreset        : std_logic_vector(gtptxp'high downto 0);
+    signal txresetdone    : std_logic_vector(gtptxp'high downto 0);
+    signal txpcsreset     : std_logic_vector(gtptxp'high downto 0);
+    signal txpmareset     : std_logic_vector(gtptxp'high downto 0);
+    signal txuserrdy      : std_logic_vector(gtptxp'high downto 0);
+    signal pll0pd         : std_logic_vector(gtptxp'high downto 0);
+    signal pll0reset      : std_logic_vector(gtptxp'high downto 0);
+    signal pll0locken     : std_logic_vector(gtptxp'high downto 0);
     signal pll0lock       : std_logic;
-    signal resetsel       : std_logic;
+    signal resetsel       : std_logic_vector(gtptxp'high downto 0);
     signal preemp_level   : std_logic_vector(4 downto 0); 
     signal swing_level    : std_logic_vector(3 downto 0); 
 
@@ -136,14 +136,12 @@ architecture Behavioral of transceiver is
     signal PLL1CLK        : STD_LOGIC;
     signal PLL1REFCLK     : STD_LOGIC;
 
-    signal TXUSRCLK            : STD_LOGIC;
-    signal TXUSRCLK2           : STD_LOGIC;
-    signal tx_out_clk          : STD_LOGIC;
+    signal TXUSRCLK            : STD_LOGIC_vector(gtptxp'length-1 downto 0);
+    signal TXUSRCLK2           : STD_LOGIC_vector(gtptxp'length-1 downto 0);
+    signal tx_out_clk          : STD_LOGIC_vector(gtptxp'length-1 downto 0);
     signal tx_out_clk_buffered : STD_LOGIC;
 begin
 --    TXOUTCLKFABRIC <= ref_clk_fabric;
-    TXUSRCLK       <= tx_out_clk_buffered;
-    TXUSRCLK2      <= tx_out_clk_buffered;
 --    TXOUTCLK       <= tx_out_clk_buffered;
     symbolclk    <= tx_out_clk_buffered;
     
@@ -156,37 +154,14 @@ begin
                     "0010";                              -- 0.4 V
 
 i_bufg: BUFG PORT MAP (
-        i => tx_out_clk,
+        i => tx_out_clk(0),
         o => tx_out_clk_buffered
     );
     
     
-i_gtx_tx_reset_controller: gtx_tx_reset_controller
-       port map (  clk         => mgmt_clk,
-               ref_clk         => ref_clk_fabric,
-
-               powerup_channel => powerup_channel,
-               tx_running      => tx_running,
-
-               pllpd           => pll0pd,
-               pllreset        => pll0reset,
-               plllocken       => pll0locken,
-               plllock         => pll0lock,
-
-               txreset         => txreset,
-               txpmareset      => txpmareset,
-               txpcsreset      => txpcsreset,
-               txuserrdy       => txuserrdy,
-               resetsel        => resetsel,
-               txresetdone     => txresetdone);
 
     -------------  GT txdata_i Assignments for 20 bit datapath  -------  
-
-    txchardispmode  <= "00"    & in_symbols(10) & in_symbols( 0);
-    txchardispval   <= "00"    & in_symbols(11) & in_symbols( 1);
-    txdata_for_tx   <= x"0000" & in_symbols(12) & in_symbols(13) & in_symbols(14) & in_symbols(15) & in_symbols(16) & in_symbols(17) & in_symbols(18) & in_symbols(19)
-                               & in_symbols(2)  & in_symbols(3)  & in_symbols(4)  & in_symbols(5)  & in_symbols(6)  & in_symbols(7)  & in_symbols(8)  & in_symbols(9);
-    TXCHARISK       <= "0000";              
+  
 
 I_IBUFDS_GTE2_0 : IBUFDS_GTE2  
     port map
@@ -274,10 +249,10 @@ gtpe2_common_i : GTPE2_COMMON
         PLL0LOCK                        =>      pll0lock,
         PLL0LOCKDETCLK                  =>      mgmt_clk,
         PLL0LOCKEN                      =>      '1',
-        PLL0PD                          =>      pll0pd,
+        PLL0PD                          =>      pll0pd(0),
         PLL0REFCLKLOST                  =>      open,
         PLL0REFCLKSEL                   =>      "001",  -- ref clock 0
-        PLL0RESET                       =>      pll0reset,
+        PLL0RESET                       =>      pll0reset(0),
         PLL1FBCLKLOST                   =>      open,
         PLL1LOCK                        =>      open,
         PLL1LOCKDETCLK                  =>      '0',
@@ -304,6 +279,52 @@ gtpe2_common_i : GTPE2_COMMON
         RCALENB                         =>      '1'
     );
 
+g_tx: for i in 0 to gtptxp'high generate
+    TXUSRCLK(i)       <= tx_out_clk_buffered;
+    TXUSRCLK2(i)      <= tx_out_clk_buffered;
+
+   
+    txdata_for_tx(32*i+ 0) <= in_symbols(9+20*i);
+    txdata_for_tx(32*i+ 1) <= in_symbols(8+20*i);
+    txdata_for_tx(32*i+ 2) <= in_symbols(7+20*i);
+    txdata_for_tx(32*i+ 3) <= in_symbols(6+20*i);
+    txdata_for_tx(32*i+ 4) <= in_symbols(5+20*i);
+    txdata_for_tx(32*i+ 5) <= in_symbols(4+20*i);
+    txdata_for_tx(32*i+ 6) <= in_symbols(3+20*i);
+    txdata_for_tx(32*i+ 7) <= in_symbols(2+20*i);
+    txchardispval (4*i+ 0) <= in_symbols( 1+20*i);
+    txchardispmode(4*i+ 0) <= in_symbols(0+20*i);
+
+    txdata_for_tx(32*i+ 8) <= in_symbols(19+20*i);
+    txdata_for_tx(32*i+ 9) <= in_symbols(18+20*i);
+    txdata_for_tx(32*i+10) <= in_symbols(17+20*i);
+    txdata_for_tx(32*i+11) <= in_symbols(16+20*i);
+    txdata_for_tx(32*i+12) <= in_symbols(15+20*i);
+    txdata_for_tx(32*i+13) <= in_symbols(14+20*i);
+    txdata_for_tx(32*i+14) <= in_symbols(13+20*i);
+    txdata_for_tx(32*i+15) <= in_symbols(12+20*i);
+    txchardispval (4*i+1)  <= in_symbols(11+20*i);
+    txchardispmode(4*i+1)  <= in_symbols(10+20*i);
+
+i_gtx_tx_reset_controller: gtx_tx_reset_controller
+       port map (  clk         => mgmt_clk,
+               ref_clk         => ref_clk_fabric(i),
+
+               powerup_channel => powerup_channel(i),
+               tx_running      => tx_running(i),
+
+               pllpd           => pll0pd(i),
+               pllreset        => pll0reset(i),
+               plllocken       => pll0locken(i),
+               plllock         => pll0lock,
+
+               txreset         => txreset(i),
+               txpmareset      => txpmareset(i),
+               txpcsreset      => txpcsreset(i),
+               txuserrdy       => txuserrdy(i),
+               resetsel        => resetsel(i),
+               txresetdone     => txresetdone(i));
+ 
 gtpe2_i : GTPE2_CHANNEL
     generic map
     (
@@ -819,9 +840,9 @@ gtpe2_i : GTPE2_CHANNEL
         TXRATEMODE                      =>      '0',
         --------------------- TX Initialization and Reset Ports --------------------
         CFGRESET                        =>      '0',
-        GTTXRESET                       =>      txreset,
+        GTTXRESET                       =>      txreset(i),
         PCSRSVDOUT                      =>      open,
-        TXUSERRDY                       =>      txuserrdy,
+        TXUSERRDY                       =>      txuserrdy(i),
         ----------------- TX Phase Interpolator PPM Controller Ports ---------------
         TXPIPPMEN                       =>      '0',
         TXPIPPMOVRDEN                   =>      '0',
@@ -829,7 +850,7 @@ gtpe2_i : GTPE2_CHANNEL
         TXPIPPMSEL                      =>      '1',
         TXPIPPMSTEPSIZE                 =>      (others => '0'),
         ---------------------- Transceiver Reset Mode Operation --------------------
-        GTRESETSEL                      =>      resetsel,
+        GTRESETSEL                      =>      resetsel(i),
         RESETOVRD                       =>      '0',
         ------------------------------- Transmit Ports -----------------------------
         TXPMARESETDONE                  =>      open,
@@ -837,9 +858,9 @@ gtpe2_i : GTPE2_CHANNEL
         PMARSVDIN0                      =>      '0',
         PMARSVDIN1                      =>      '0',
         ------------------ Transmit Ports - FPGA TX Interface Ports ----------------
-        TXDATA                          =>      txdata_for_tx,
-        TXUSRCLK                        =>      txusrclk,
-        TXUSRCLK2                       =>      txusrclk2,
+        TXDATA                          =>      txdata_for_tx(31+32*i downto 32*i),
+        TXUSRCLK                        =>      txusrclk(i),
+        TXUSRCLK2                       =>      txusrclk2(i),
         --------------------- Transmit Ports - PCI Express Ports -------------------
         TXELECIDLE                      =>      '0',
         TXMARGIN                        =>      (others => '0'),
@@ -849,9 +870,9 @@ gtpe2_i : GTPE2_CHANNEL
         TXPRBSFORCEERR                  =>      '0',
         ------------------ Transmit Ports - TX 8B/10B Encoder Ports ----------------
         TX8B10BBYPASS                   =>      (others => '0'),
-        TXCHARDISPMODE                  =>      txchardispmode,
-        TXCHARDISPVAL                   =>      txchardispval,
-        TXCHARISK                       =>      txcharisk,
+        TXCHARDISPMODE                  =>      txchardispmode(3+4*i downto 4*i),
+        TXCHARDISPVAL                   =>      txchardispval(3+4*i downto 4*i),
+        TXCHARISK                       =>      (others => '0'),
         ------------------ Transmit Ports - TX Buffer Bypass Ports -----------------
         TXDLYBYPASS                     =>      '1',
         TXDLYEN                         =>      '0',
@@ -877,8 +898,8 @@ gtpe2_i : GTPE2_CHANNEL
         TXSYNCMODE                      =>      '0',
         TXSYNCOUT                       =>      open,
         --------------- Transmit Ports - TX Configurable Driver Ports --------------
-        GTPTXN                          =>      gtptxn,
-        GTPTXP                          =>      gtptxp,
+        GTPTXN                          =>      gtptxn(i),
+        GTPTXP                          =>      gtptxp(i),
         TXBUFDIFFCTRL                   =>      "100",
         TXDEEMPH                        =>      '0',
         TXDIFFCTRL                      =>      swing_level,
@@ -887,8 +908,8 @@ gtpe2_i : GTPE2_CHANNEL
         TXMAINCURSOR                    =>      "0000000",
         TXPISOPD                        =>      '0',
         ----------- Transmit Ports - TX Fabric Clock Output Control Ports ----------
-        TXOUTCLK                        =>      tx_out_clk,
-        TXOUTCLKFABRIC                  =>      ref_clk_fabric, --txoutclkfabric,
+        TXOUTCLK                        =>      tx_out_clk(i),
+        TXOUTCLKFABRIC                  =>      ref_clk_fabric(i), --txoutclkfabric,
         TXOUTCLKPCS                     =>      open,
         TXOUTCLKSEL                     =>      "010",
         TXRATEDONE                      =>      open,
@@ -898,9 +919,9 @@ gtpe2_i : GTPE2_CHANNEL
         TXSEQUENCE                      =>      (others => '0'),
         TXSTARTSEQ                      =>      '0',
         ------------- Transmit Ports - TX Initialization and Reset Ports -----------
-        TXPCSRESET                      =>      txpcsreset,
-        TXPMARESET                      =>      txpmareset,
-        TXRESETDONE                     =>      txresetdone,
+        TXPCSRESET                      =>      txpcsreset(i),
+        TXPMARESET                      =>      txpmareset(i),
+        TXRESETDONE                     =>      txresetdone(i),
         ------------------ Transmit Ports - TX OOB signalling Ports ----------------
         TXCOMFINISH                     =>      open,
         TXCOMINIT                       =>      '0',
@@ -913,7 +934,6 @@ gtpe2_i : GTPE2_CHANNEL
         TXDETECTRX                      =>      '0',
         ------------------ Transmit Ports - pattern Generator Ports ----------------
         TXPRBSSEL                       =>      (others => '0')
-
     );
-
+    end generate;
 end Behavioral;

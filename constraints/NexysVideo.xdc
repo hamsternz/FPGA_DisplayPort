@@ -14,8 +14,10 @@ set_property -dict {PACKAGE_PIN F6} [get_ports {refclk0_p}]
 set_property -dict {PACKAGE_PIN E6} [get_ports {refclk0_n}]
 set_property -dict {PACKAGE_PIN F10} [get_ports {refclk1_p}]
 set_property -dict {PACKAGE_PIN E10} [get_ports {refclk1_n}]
-set_property -dict {PACKAGE_PIN B4} [get_ports {gtptxp}]
-set_property -dict {PACKAGE_PIN A4} [get_ports {gtptxn}]
+set_property -dict {PACKAGE_PIN B4} [get_ports {gtptxp[0]}]
+set_property -dict {PACKAGE_PIN A4} [get_ports {gtptxn[0]}]
+set_property -dict {PACKAGE_PIN D5} [get_ports {gtptxp[1]}]
+set_property -dict {PACKAGE_PIN C5} [get_ports {gtptxn[1]}]
 
 
 # DEBUG on JA
@@ -60,5 +62,5 @@ set_property -dict {PACKAGE_PIN M17 IOSTANDARD LVCMOS25} [get_ports {switches[7]
 
 
 
-create_clock -period 7.407 -name i_tx0/I -waveform {0.000 3.704} [get_pins i_tx0/gtpe2_i/TXOUTCLK]
-create_clock -period 7.407 -name i_tx0/ref_clk -waveform {0.000 3.704} [get_pins i_tx0/gtpe2_i/TXOUTCLKFABRIC]
+#create_clock -period 7.407 -name i_tx0/I -waveform {0.000 3.704} [get_pins i_tx0/gtpe2_i/TXOUTCLK]
+#create_clock -period 7.407 -name i_tx0/ref_clk -waveform {0.000 3.704} [get_pins i_tx0/gtpe2_i/TXOUTCLKFABRIC]

@@ -50,6 +50,7 @@
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.NUMERIC_STD.ALL;
 
 entity top_level is
     port ( 
@@ -62,8 +63,8 @@ entity top_level is
         refclk0_n       : in  STD_LOGIC;
         refclk1_p       : in  STD_LOGIC;
         refclk1_n       : in  STD_LOGIC;
-        gtptxp          : out std_logic;
-        gtptxn          : out std_logic;    
+        gtptxp          : out std_logic_vector(1 downto 0);
+        gtptxn          : out std_logic_vector(1 downto 0);    
         ------------------------------
         dp_tx_hp_detect : in    std_logic;
         dp_tx_aux_p     : inout std_logic;
@@ -86,6 +87,22 @@ architecture Behavioral of top_level is
             clk          : in  std_logic;
             ready        : out std_logic;
             data         : out std_logic_vector(72 downto 0)
+        );
+    end component;
+    
+    component test_source_800_600_RGB_444_ch1 is
+        port ( 
+            clk    : in  std_logic;
+            ready  : out std_logic;
+            data   : out std_logic_vector(72 downto 0) := (others => '0')
+        );
+    end component;
+
+    component test_source_3840_2160_YCC_422_ch2 is
+        port ( 
+            clk    : in  std_logic;
+            ready  : out std_logic;
+            data   : out std_logic_vector(72 downto 0) := (others => '0')
         );
     end component;
 
@@ -128,6 +145,44 @@ architecture Behavioral of top_level is
             out_data             : out std_logic_vector(72 downto 0));
     end component;
 
+    component insert_main_stream_attrbutes_two_channels is
+        port (
+            clk                  : std_logic;
+            -----------------------------------------------------
+            -- This determines how the MSA is packed
+            -----------------------------------------------------      
+            active               : std_logic;
+            -----------------------------------------------------
+            -- The MSA values (some are range reduced and could 
+            -- be 16 bits ins size)
+            -----------------------------------------------------      
+            M_value              : in std_logic_vector(23 downto 0);
+            N_value              : in std_logic_vector(23 downto 0);
+            H_visible            : in std_logic_vector(11 downto 0);
+            V_visible            : in std_logic_vector(11 downto 0);
+            H_total              : in std_logic_vector(11 downto 0);
+            V_total              : in std_logic_vector(11 downto 0);
+            H_sync_width         : in std_logic_vector(11 downto 0);
+            V_sync_width         : in std_logic_vector(11 downto 0);
+            H_start              : in std_logic_vector(11 downto 0);
+            V_start              : in std_logic_vector(11 downto 0);
+            H_vsync_active_high  : in std_logic;
+            V_vsync_active_high  : in std_logic;
+            flag_sync_clock      : in std_logic;
+            flag_YCCnRGB         : in std_logic;
+            flag_422n444         : in std_logic;
+            flag_YCC_colour_709  : in std_logic;
+            flag_range_reduced   : in std_logic;
+            flag_interlaced_even : in std_logic;
+            flags_3d_Indicators  : in std_logic_vector(1 downto 0);
+            bits_per_colour      : in std_logic_vector(4 downto 0);
+
+            -----------------------------------------------------
+            -- The stream of pixel data coming in and out
+            -----------------------------------------------------
+            in_data              : in  std_logic_vector(72 downto 0);
+            out_data             : out std_logic_vector(72 downto 0));
+    end component;
 
     component idle_pattern_inserter is
         port ( 
@@ -159,11 +214,10 @@ architecture Behavioral of top_level is
     
     component data_to_8b10b is
         port ( 
-            clk           : in  std_logic;
-            data0forceneg : in  std_logic;
-            data1forceneg : in  std_logic;
-            in_data       : in  std_logic_vector(17 downto 0);
-            out_data      : out std_logic_vector(19 downto 0)
+            clk      : in  std_logic;
+            forceneg : in  std_logic_vector(1 downto 0);
+            in_data  : in  std_logic_vector(17 downto 0);
+            out_data : out std_logic_vector(19 downto 0)
         );
     end component;
 
@@ -199,7 +253,7 @@ architecture Behavioral of top_level is
     
     component Transceiver is
     Port ( mgmt_clk        : in  STD_LOGIC;
-           powerup_channel : in  STD_LOGIC;
+           powerup_channel : in  STD_LOGIC_vector;
 
            preemp_0p0      : in  STD_LOGIC;
            preemp_3p5      : in  STD_LOGIC;
@@ -209,7 +263,7 @@ architecture Behavioral of top_level is
            swing_0p6       : in  STD_LOGIC;
            swing_0p8       : in  STD_LOGIC;
 
-           tx_running      : out STD_LOGIC;
+           tx_running      : out STD_LOGIC_vector;
 
 
            refclk0_p       : in  STD_LOGIC;
@@ -220,10 +274,10 @@ architecture Behavioral of top_level is
 
            symbolclk      : out STD_LOGIC;
            
-           in_symbols     : in  std_logic_vector(19 downto 0);
+           in_symbols     : in  std_logic_vector(79 downto 0);
 
-           gtptxp         : out std_logic;
-           gtptxn         : out std_logic);
+           gtptxp         : out std_logic_vector;
+           gtptxn         : out std_logic_vector);
     end component;
 
     component aux_channel is
@@ -407,7 +461,7 @@ architecture Behavioral of top_level is
     signal txoutclk         : std_logic := '0';
     signal symbolclk        : std_logic := '0';
     
-    signal tx_running       : std_logic := '0';
+    signal tx_running       : std_logic_vector(3 downto 0) := (others => '0');
 
     signal powerup_channel : std_logic_vector(3 downto 0);
     signal clock_locked    : std_logic := '0';
@@ -443,12 +497,10 @@ architecture Behavioral of top_level is
     signal signal_data         : std_logic_vector(71 downto 0);
     signal sr_inserted_data    : std_logic_vector(71 downto 0);    
     signal scrambled_data      : std_logic_vector(71 downto 0);
+    signal final_data          : std_logic_vector(71 downto 0);
+    signal force_parity_neg    : std_logic_vector( 7 downto 0);
+    signal symbols             : std_logic_vector(79 downto 0);
     
-    signal ch0_data            : std_logic_vector(17 downto 0);
-    signal ch0_symbols         : std_logic_vector(79 downto 0);
-    signal ch0_data0forceneg   : std_logic;
-    signal ch0_data1forceneg   : std_logic;
-
     signal hpd_irq     : std_logic;
     signal hpd_present : std_logic;
 
@@ -456,6 +508,7 @@ architecture Behavioral of top_level is
     constant BS     : std_logic_vector(8 downto 0) := "110111100";   -- K28.5
     constant SR     : std_logic_vector(8 downto 0) := "100011100";   -- K28.0
 
+    constant delay_index : std_logic_vector(7 downto 0) := "11100100"; -- 3,2,1,0 for in the gneerate loop
 begin
 
 process(clk)
@@ -617,35 +670,39 @@ i_link_signal_mgmt:  link_signal_mgmt Port map (
  --   debug_pmod(6) <= symbol_locked;
     debug_pmod(7) <= tx_link_established;
 
-i_test_source: test_source port map ( 
+--i_test_source: test_source_800_600_RGB_444_ch1  port map ( 
+i_test_source: test_source_3840_2160_YCC_422_ch2  port map ( 
             clk          => symbolclk,
             ready        => test_signal_ready,
             data         => test_signal_data
         );
 
-i_insert_main_stream_attrbutes_one_channel: insert_main_stream_attrbutes_one_channel port map (
+--i_insert_main_stream_attrbutes_one_channel: insert_main_stream_attrbutes_one_channel port map (
+i_insert_main_stream_attrbutes_two_channels: insert_main_stream_attrbutes_two_channels port map (
             clk                  => symbolclk,
             active               => '1',
             -----------------------------------------------------
             -- The MSA values (some are range reduced and could 
             -- be 16 bits ins size)
             -----------------------------------------------------      
-            M_value              => x"012F68",
+            M_value              => x"07DA13", -- For 265MHz/270Mhz
             N_value              => x"080000",
-            H_visible            => x"320",  -- 800
-            V_visible            => x"258",  -- 600
-            H_total              => x"420",  -- 1056
-            V_total              => x"274",  -- 628
-            H_sync_width         => x"080",  -- 128
-            V_sync_width         => x"004",   -- 4
-            H_start              => x"0D8",  -- 216 
-            V_start              => x"01b",  -- 37
-            H_vsync_active_high  => '0',
-            V_vsync_active_high  => '0',
+     
+            V_visible            => x"870",  -- 2160
+            V_total              => x"88F", -- 2191
+            V_sync_width         => x"003",  -- 3
+            V_start              => x"01A",  -- 26
+            
+            H_visible            => x"F00",  -- 3840
+            H_total              => x"FC0",  -- 1056
+            H_sync_width         => x"030",  -- 128
+            H_start              => x"0A0",  -- 26 
+            H_vsync_active_high  => '1',
+            V_vsync_active_high  => '1',
             flag_sync_clock      => '1',
-            flag_YCCnRGB         => '0',
-            flag_422n444         => '0',
-            flag_range_reduced   => '0',
+            flag_YCCnRGB         => '1',
+            flag_422n444         => '1',
+            flag_range_reduced   => '1',
             flag_interlaced_even => '0',
             flag_YCC_colour_709  => '0',
             flags_3d_Indicators  => (others => '0'),
@@ -670,73 +727,48 @@ i_idle_pattern_inserter: idle_pattern_inserter  port map (
             out_data         => signal_data
         );
 
-i_scrambler_reset_inserter : scrambler_reset_inserter
+i_scrambler_reset_inserter: scrambler_reset_inserter
         port map ( 
             clk       => symbolclk,
             in_data   => signal_data,
             out_data  => sr_inserted_data
         );
 
-i_scrambler0:  scrambler
+g_per_channel: for i in 0 to gtptxp'high generate
+
+i_scrambler:  scrambler
         port map ( 
             clk        => symbolclk,
             bypass0    => '0',
             bypass1    => '0',
-            in_data    => sr_inserted_data(17 downto 0),
-            out_data   => scrambled_data(17 downto 0)
+            in_data    => sr_inserted_data(17+i*18 downto 0+i*18),
+            out_data   => scrambled_data(17+i*18 downto 0+i*18)
         );
 
-i_scrambler1:  scrambler
-        port map ( 
-            clk        => symbolclk,
-            bypass0    => '0',
-            bypass1    => '0',
-            in_data    => sr_inserted_data(35 downto 18),
-            out_data   => scrambled_data(35 downto 18)
-        );
-
-i_scrambler2:  scrambler
-        port map ( 
-            clk        => symbolclk,
-            bypass0    => '0',
-            bypass1    => '0',
-            in_data    => sr_inserted_data(53 downto 36),
-            out_data   => scrambled_data(53 downto 36)
-        );
-
-i_scrambler3:  scrambler
-        port map ( 
-            clk        => symbolclk,
-            bypass0    => '0',
-            bypass1    => '0',
-            in_data    => sr_inserted_data(71 downto 54),
-            out_data   => scrambled_data(71 downto 54)
-        );
-
-i_train_channel0: training_and_channel_delay port map (
+i_train_channel: training_and_channel_delay port map (
         clk               => symbolclk,
 
-        channel_delay     => "00",
+        channel_delay     => delay_index(1+i*2 downto 0+i*2),
         clock_train       => tx_clock_train,
         align_train       => tx_align_train, 
         
-        in_data           => scrambled_data(17 downto 0),
-        out_data          => ch0_data,
-        out_data0forceneg => ch0_data0forceneg,
-        out_data1forceneg => ch0_data1forceneg
+        in_data           => scrambled_data(17+i*18 downto 0+i*18),
+        out_data          => final_data(17+i*18 downto 0+i*18),
+        out_data0forceneg => force_parity_neg(0+i*2),
+        out_data1forceneg => force_parity_neg(1+i*2)
     );
 
 i_data_to_8b10b: data_to_8b10b port map ( 
-        clk           => symbolclk,
-        in_data       => ch0_data(17 downto 0),
-        out_data      => ch0_symbols(19 downto 0),
-        data0forceneg => ch0_data0forceneg,
-        data1forceneg => ch0_data1forceneg
+        clk      => symbolclk,
+        in_data  => final_data(17+i*18 downto 0+i*18),
+        out_data => symbols(19+i*20 downto 0+i*20),
+        forceneg => force_parity_neg(1+i*2 downto 0+i*2)
         );
+    end generate;
 
 i_tx0: Transceiver Port map ( 
        mgmt_clk        => clk,
-       powerup_channel => powerup_channel(0),
+       powerup_channel => powerup_channel,
        tx_running      => tx_running,
 
        preemp_0p0      => preemp_0p0, 
@@ -752,7 +784,7 @@ i_tx0: Transceiver Port map (
 
        refclk1_p       => refclk1_p,
        refclk1_n       => refclk1_n,
-       in_symbols      => ch0_symbols(19 downto 0),
+       in_symbols      => symbols,
                   
        gtptxp          => gtptxp,
        gtptxn          => gtptxn,

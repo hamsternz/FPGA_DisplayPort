@@ -68,8 +68,8 @@ architecture arch of tb_aux_channel is
         refclk0_n       : in  STD_LOGIC;
         refclk1_p       : in  STD_LOGIC;
         refclk1_n       : in  STD_LOGIC;
-        gtptxp          : out std_logic;
-        gtptxn          : out std_logic;    
+        gtptxp          : out std_logic_vector(1 downto 0);
+        gtptxn          : out std_logic_vector(1 downto 0);    
         ------------------------------
         dp_tx_hp_detect : in    std_logic;
         dp_tx_aux_p     : inout std_logic;
@@ -92,8 +92,8 @@ architecture arch of tb_aux_channel is
     signal refclk0_n       : STD_LOGIC;
     signal refclk1_p       : STD_LOGIC := '1';
     signal refclk1_n       : STD_LOGIC := '0';
-    signal gtptxp          : std_logic;
-    signal gtptxn          : std_logic;    
+    signal gtptxp          : std_logic_vector(1 downto 0);
+    signal gtptxn          : std_logic_vector(1 downto 0);    
     
 begin
 
