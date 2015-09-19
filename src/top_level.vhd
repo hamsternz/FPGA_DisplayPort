@@ -85,84 +85,47 @@ architecture Behavioral of top_level is
         port ( 
             clk          : in  std_logic;
             ready        : out std_logic;
-            data0        : out std_logic_vector(7 downto 0);
-            data0k       : out std_logic;
-            data1        : out std_logic_vector(7 downto 0);
-            data1k       : out std_logic;
-            switch_point : out std_logic
+            data         : out std_logic_vector(72 downto 0)
         );
     end component;
 
-    component insert_main_stream_attrbutes is
-    port (
-        clk                  : std_logic;
-        -----------------------------------------------------
-        -- This determines how the MSA is packed
-        -----------------------------------------------------      
-        active_channels      : std_logic_vector(1 downto 0);
-        -----------------------------------------------------
-        -- The MSA values (some are range reduced and could 
-        -- be 16 bits ins size)
-        -----------------------------------------------------      
-        M_value              : in std_logic_vector(23 downto 0);
-        N_value              : in std_logic_vector(23 downto 0);
-        H_visible            : in std_logic_vector(11 downto 0);
-        V_visible            : in std_logic_vector(11 downto 0);
-        H_front_porch        : in std_logic_vector(11 downto 0);
-        V_front_porch        : in std_logic_vector(11 downto 0);
-        H_sync_width         : in std_logic_vector(11 downto 0);
-        V_sync_width         : in std_logic_vector(11 downto 0);
-        H_back_porch         : in std_logic_vector(11 downto 0);
-        V_back_porch         : in std_logic_vector(11 downto 0);
-        H_vsync_active_high  : in std_logic;
-        V_vsync_active_high  : in std_logic;
-        flag_sync_clock      : in std_logic;
-        flag_YCCnRGB         : in std_logic;
-        flag_422n444         : in std_logic;
-        flag_range_reduced   : in std_logic;
-        flag_interlaced_Even : in std_logic;
-        flags_3d_Indicators  : in std_logic_vector(11 downto 0);
-        bits_per_colour      : in std_logic_vector(5 downto 0);
-        -----------------------------------------------------
-        -- The stream of pixel data coming in
-        -----------------------------------------------------
-        in_switch_point      : in  std_logic;
-        in_ch0_data0k        : in  std_logic;
-        in_ch0_data0         : in  std_logic_vector(7 downto 0);
-        in_ch0_data1k        : in  std_logic;
-        in_ch0_data1         : in  std_logic_vector(7 downto 0);
-        in_ch1_data0k        : in  std_logic;
-        in_ch1_data0         : in  std_logic_vector(7 downto 0);
-        in_ch1_data1k        : in  std_logic;
-        in_ch1_data1         : in  std_logic_vector(7 downto 0);
-        in_ch2_data0k        : in  std_logic;
-        in_ch2_data0         : in  std_logic_vector(7 downto 0);
-        in_ch2_data1k        : in  std_logic;
-        in_ch2_data1         : in  std_logic_vector(7 downto 0);
-        in_ch3_data0k        : in  std_logic;
-        in_ch3_data0         : in  std_logic_vector(7 downto 0);
-        in_ch3_data1k        : in  std_logic;
-        in_ch3_data1         : in  std_logic_vector(7 downto 0);
-        -----------------------------------------------------
-        -- The stream of pixel data going out
-        -----------------------------------------------------
-        out_switch_point      : out std_logic                    := '0';
-        out_ch0_data0k        : out std_logic                    := '0';
-        out_ch0_data0         : out std_logic_vector(7 downto 0) := (others => '0');
-        out_ch0_data1k        : out std_logic                    := '0';
-        out_ch0_data1         : out std_logic_vector(7 downto 0) := (others => '0');
-        out_ch1_data0k        : out std_logic                    := '0';
-        out_ch1_data0         : out std_logic_vector(7 downto 0) := (others => '0');
-        out_ch1_data1k        : out std_logic                    := '0';
-        out_ch1_data1         : out std_logic_vector(7 downto 0) := (others => '0');
-        out_ch2_data0k        : out std_logic                    := '0';
-        out_ch2_data0         : out std_logic_vector(7 downto 0) := (others => '0');
-        out_ch2_data1k        : out std_logic                    := '0';
-        out_ch2_data1         : out std_logic_vector(7 downto 0) := (others => '0');
-        out_ch3_data0k        : out std_logic                    := '0';
-        out_ch3_data0         : out std_logic_vector(7 downto 0) := (others => '0');
-        out_ch3_data1k        : out std_logic                    := '0';
-        out_ch3_data1         : out std_logic_vector(7 downto 0) := (others => '0'));
+    component insert_main_stream_attrbutes_one_channel is
+        port (
+            clk                  : std_logic;
+            -----------------------------------------------------
+            -- This determines how the MSA is packed
+            -----------------------------------------------------      
+            active               : std_logic;
+            -----------------------------------------------------
+            -- The MSA values (some are range reduced and could 
+            -- be 16 bits ins size)
+            -----------------------------------------------------      
+            M_value              : in std_logic_vector(23 downto 0);
+            N_value              : in std_logic_vector(23 downto 0);
+            H_visible            : in std_logic_vector(11 downto 0);
+            V_visible            : in std_logic_vector(11 downto 0);
+            H_total              : in std_logic_vector(11 downto 0);
+            V_total              : in std_logic_vector(11 downto 0);
+            H_sync_width         : in std_logic_vector(11 downto 0);
+            V_sync_width         : in std_logic_vector(11 downto 0);
+            H_start              : in std_logic_vector(11 downto 0);
+            V_start              : in std_logic_vector(11 downto 0);
+            H_vsync_active_high  : in std_logic;
+            V_vsync_active_high  : in std_logic;
+            flag_sync_clock      : in std_logic;
+            flag_YCCnRGB         : in std_logic;
+            flag_422n444         : in std_logic;
+            flag_YCC_colour_709  : in std_logic;
+            flag_range_reduced   : in std_logic;
+            flag_interlaced_even : in std_logic;
+            flags_3d_Indicators  : in std_logic_vector(1 downto 0);
+            bits_per_colour      : in std_logic_vector(4 downto 0);
+
+            -----------------------------------------------------
+            -- The stream of pixel data coming in and out
+            -----------------------------------------------------
+            in_data              : in  std_logic_vector(72 downto 0);
+            out_data             : out std_logic_vector(72 downto 0));
     end component;
 
 
@@ -171,30 +134,16 @@ architecture Behavioral of top_level is
             clk              : in  std_logic;
             channel_ready    : in  std_logic;
             source_ready     : in  std_logic;
-            in_data0         : in  std_logic_vector(7 downto 0);
-            in_data0k        : in  std_logic;
-            in_data1         : in  std_logic_vector(7 downto 0);
-            in_data1k        : in  std_logic;
-            in_switch_point  : in  std_logic;
-
-            out_data0        : out std_logic_vector(7 downto 0);
-            out_data0k       : out std_logic;
-            out_data1        : out std_logic_vector(7 downto 0);
-            out_data1k       : out std_logic
+            in_data          : in  std_logic_vector(72 downto 0);
+            out_data         : out std_logic_vector(71 downto 0)
         );
     end component;    
     
     component scrambler_reset_inserter is
         port ( 
-            clk        : in  std_logic;
-            in_data0   : in  std_logic_vector(7 downto 0);
-            in_data0k  : in  std_logic;
-            in_data1   : in  std_logic_vector(7 downto 0);
-            in_data1k  : in  std_logic;
-            out_data0  : out std_logic_vector(7 downto 0);
-            out_data0k : out std_logic;
-            out_data1  : out std_logic_vector(7 downto 0);
-            out_data1k : out std_logic
+            clk      : in  std_logic;
+            in_data  : in  std_logic_vector(71 downto 0);
+            out_data : out std_logic_vector(71 downto 0)
         );
     end component;
     
@@ -202,29 +151,19 @@ architecture Behavioral of top_level is
         port ( 
             clk        : in  std_logic;
             bypass0    : in  std_logic;
-            bypass1    : in  std_logic;
-            in_data0   : in  std_logic_vector(7 downto 0);
-            in_data0k  : in  std_logic;
-            in_data1   : in  std_logic_vector(7 downto 0);
-            in_data1k  : in  std_logic;
-            out_data0  : out std_logic_vector(7 downto 0);
-            out_data0k : out std_logic;
-            out_data1  : out std_logic_vector(7 downto 0);
-            out_data1k : out std_logic
+            bypass1    : in  std_logic; 
+            in_data    : in  std_logic_vector(17 downto 0);
+            out_data   : out std_logic_vector(17 downto 0)
         );
     end component;
     
     component data_to_8b10b is
         port ( 
             clk           : in  std_logic;
-            data0         : in  std_logic_vector(7 downto 0);
-            data0k        : in  std_logic;
             data0forceneg : in  std_logic;
-            data1         : in  std_logic_vector(7 downto 0);
-            data1k        : in  std_logic;
             data1forceneg : in  std_logic;
-            symbol0       : out std_logic_vector(9 downto 0);
-            symbol1       : out std_logic_vector(9 downto 0)
+            in_data       : in  std_logic_vector(17 downto 0);
+            out_data      : out std_logic_vector(19 downto 0)
         );
     end component;
 
@@ -279,13 +218,9 @@ architecture Behavioral of top_level is
            refclk1_p       : in  STD_LOGIC;
            refclk1_n       : in  STD_LOGIC;
 
---           TXOUTCLK       : out STD_LOGIC;
---           TXOUTCLKFABRIC : out STD_LOGIC;
---           TXOUTCLKPCS    : out STD_LOGIC;
-           symbolclk    : out STD_LOGIC;
+           symbolclk      : out STD_LOGIC;
            
-           txsymbol0      : in  std_logic_vector(9 downto 0);
-           txsymbol1      : in  std_logic_vector(9 downto 0);
+           in_symbols     : in  std_logic_vector(19 downto 0);
 
            gtptxp         : out std_logic;
            gtptxn         : out std_logic);
@@ -392,16 +327,9 @@ architecture Behavioral of top_level is
         clock_train        : in  std_logic;
         align_train        : in  std_logic;
 
-        in_data0           : in  std_logic_vector(7 downto 0);
-        in_data0k          : in  std_logic;
-        in_data1           : in  std_logic_vector(7 downto 0);
-        in_data1k          : in  std_logic;
-
-        out_data0          : out std_logic_vector(7 downto 0);
-        out_data0k         : out std_logic;
+        in_data            : in  std_logic_vector(17 downto 0);
+        out_data           : out std_logic_vector(17 downto 0);
         out_data0forceneg  : out std_logic;
-        out_data1          : out std_logic_vector(7 downto 0);
-        out_data1k         : out std_logic;
         out_data1forceneg  : out std_logic
     );
     end component;
@@ -508,40 +436,19 @@ architecture Behavioral of top_level is
     signal test_signal : std_logic_vector(8 downto 0);
 
     signal scramble_bypass        : std_logic;
+    signal test_signal_ready      : std_logic;
     
-    signal test_signal_data0         : std_logic_vector(7 downto 0);
-    signal test_signal_data0k        : std_logic;
-    signal test_signal_data1         : std_logic_vector(7 downto 0);
-    signal test_signal_data1k        : std_logic;
-    signal test_signal_switch_point  : std_logic;
-    signal test_signal_ready         : std_logic;
-
-    signal signal_data0              : std_logic_vector(7 downto 0);
-    signal signal_data0k             : std_logic;
-    signal signal_data1              : std_logic_vector(7 downto 0);
-    signal signal_data1k             : std_logic;
-
-    signal sr_inserted_data0      : std_logic_vector(7 downto 0);
-    signal sr_inserted_data0k     : std_logic;
-    signal sr_inserted_data1      : std_logic_vector(7 downto 0);
-    signal sr_inserted_data1k     : std_logic;
+    signal test_signal_data    : std_logic_vector(72 downto 0);  -- With switching point
+    signal msa_merged_data     : std_logic_vector(72 downto 0);  -- With switching point
+    signal signal_data         : std_logic_vector(71 downto 0);
+    signal sr_inserted_data    : std_logic_vector(71 downto 0);    
+    signal scrambled_data      : std_logic_vector(71 downto 0);
     
-    signal scrambled_data0      : std_logic_vector(7 downto 0);
-    signal scrambled_data0k     : std_logic;
-    signal scrambled_data1      : std_logic_vector(7 downto 0);
-    signal scrambled_data1k     : std_logic;
-    signal scrambled_symbol0     : std_logic_vector(9 downto 0);
-    signal scrambled_symbol1     : std_logic_vector(9 downto 0);
-    --
-    signal ch0_data0              : std_logic_vector(7 downto 0);
-    signal ch0_data0k             : std_logic;
-    signal ch0_data0forceneg      : std_logic;
-    signal ch0_symbol0            : std_logic_vector(9 downto 0);
-    --
-    signal ch0_data1              : std_logic_vector(7 downto 0);
-    signal ch0_data1k             : std_logic;
-    signal ch0_data1forceneg      : std_logic;
-    signal ch0_symbol1            : std_logic_vector(9 downto 0);
+    signal ch0_data            : std_logic_vector(17 downto 0);
+    signal ch0_symbols         : std_logic_vector(79 downto 0);
+    signal ch0_data0forceneg   : std_logic;
+    signal ch0_data1forceneg   : std_logic;
+
     signal hpd_irq     : std_logic;
     signal hpd_present : std_logic;
 
@@ -550,21 +457,6 @@ architecture Behavioral of top_level is
     constant SR     : std_logic_vector(8 downto 0) := "100011100";   -- K28.0
 
 begin
-process(symbolclk)
-    begin
-        if rising_edge(symbolclk) then
-            if (ch0_data0k & ch0_data0) = SR or (ch0_data1k & ch0_data1) = SR then
-                debug_pmod(6) <= '1';
-            end if;
-            if (ch0_data0k & ch0_data0) = BS or (ch0_data1k & ch0_data1) = BS then
-                debug_pmod(6) <= '1';
-            end if;
-            
-            if (ch0_data0k & ch0_data0) = BE or (ch0_data1k & ch0_data1) = BE then
-                debug_pmod(6) <= '0';
-            end if;
-        end if;
-    end process;
 
 process(clk)
     begin
@@ -728,88 +620,118 @@ i_link_signal_mgmt:  link_signal_mgmt Port map (
 i_test_source: test_source port map ( 
             clk          => symbolclk,
             ready        => test_signal_ready,
-            data0        => test_signal_data0,
-            data0k       => test_signal_data0k,
-            data1        => test_signal_data1,
-            data1k       => test_signal_data1k,
-            switch_point => test_signal_switch_point
+            data         => test_signal_data
         );
+
+i_insert_main_stream_attrbutes_one_channel: insert_main_stream_attrbutes_one_channel port map (
+            clk                  => symbolclk,
+            active               => '1',
+            -----------------------------------------------------
+            -- The MSA values (some are range reduced and could 
+            -- be 16 bits ins size)
+            -----------------------------------------------------      
+            M_value              => x"012F68",
+            N_value              => x"080000",
+            H_visible            => x"320",  -- 800
+            V_visible            => x"258",  -- 600
+            H_total              => x"420",  -- 1056
+            V_total              => x"274",  -- 628
+            H_sync_width         => x"080",  -- 128
+            V_sync_width         => x"004",   -- 4
+            H_start              => x"0D8",  -- 216 
+            V_start              => x"01b",  -- 37
+            H_vsync_active_high  => '0',
+            V_vsync_active_high  => '0',
+            flag_sync_clock      => '1',
+            flag_YCCnRGB         => '0',
+            flag_422n444         => '0',
+            flag_range_reduced   => '0',
+            flag_interlaced_even => '0',
+            flag_YCC_colour_709  => '0',
+            flags_3d_Indicators  => (others => '0'),
+            bits_per_colour      => "01000",
+            -----------------------------------------------------
+            -- The stream of pixel data coming in
+            -----------------------------------------------------
+            in_data              => test_signal_data,
+            -----------------------------------------------------
+            -- The stream of pixel data going out
+            -----------------------------------------------------
+            out_data             => msa_merged_data
+        );
+
 
 i_idle_pattern_inserter: idle_pattern_inserter  port map ( 
             clk              => symbolclk,
             channel_ready    => tx_link_established,
             source_ready     => test_signal_ready,
             
-            in_data0        => test_signal_data0,
-            in_data0k       => test_signal_data0k,
-            in_data1        => test_signal_data1,
-            in_data1k       => test_signal_data1k,
-            in_switch_point => test_signal_switch_point,
-
-            out_data0        => signal_data0,
-            out_data0k       => signal_data0k,
-            out_data1        => signal_data1,
-            out_data1k       => signal_data1k
+            in_data          => msa_merged_data,
+            out_data         => signal_data
         );
 
 i_scrambler_reset_inserter : scrambler_reset_inserter
         port map ( 
-            clk        => symbolclk,
-            in_data0   => signal_data0,
-            in_data0k  => signal_data0k,
-            in_data1   => signal_data1,
-            in_data1k  => signal_data1k,
-            out_data0  => sr_inserted_data0,
-            out_data0k => sr_inserted_data0k,
-            out_data1  => sr_inserted_data1,
-            out_data1k => sr_inserted_data1k
+            clk       => symbolclk,
+            in_data   => signal_data,
+            out_data  => sr_inserted_data
         );
 
-i_scrambler : scrambler
+i_scrambler0:  scrambler
         port map ( 
             clk        => symbolclk,
             bypass0    => '0',
             bypass1    => '0',
-            in_data0   => sr_inserted_data0,
-            in_data0k  => sr_inserted_data0k,
-            in_data1   => sr_inserted_data1,
-            in_data1k  => sr_inserted_data1k,
-            out_data0  => scrambled_data0,
-            out_data0k => scrambled_data0k,
-            out_data1  => scrambled_data1,
-            out_data1k => scrambled_data1k
+            in_data    => sr_inserted_data(17 downto 0),
+            out_data   => scrambled_data(17 downto 0)
+        );
+
+i_scrambler1:  scrambler
+        port map ( 
+            clk        => symbolclk,
+            bypass0    => '0',
+            bypass1    => '0',
+            in_data    => sr_inserted_data(35 downto 18),
+            out_data   => scrambled_data(35 downto 18)
+        );
+
+i_scrambler2:  scrambler
+        port map ( 
+            clk        => symbolclk,
+            bypass0    => '0',
+            bypass1    => '0',
+            in_data    => sr_inserted_data(53 downto 36),
+            out_data   => scrambled_data(53 downto 36)
+        );
+
+i_scrambler3:  scrambler
+        port map ( 
+            clk        => symbolclk,
+            bypass0    => '0',
+            bypass1    => '0',
+            in_data    => sr_inserted_data(71 downto 54),
+            out_data   => scrambled_data(71 downto 54)
         );
 
 i_train_channel0: training_and_channel_delay port map (
-        clk             => symbolclk,
+        clk               => symbolclk,
 
-        channel_delay   => "00",
-        clock_train     => tx_clock_train,
-        align_train     => tx_align_train, 
+        channel_delay     => "00",
+        clock_train       => tx_clock_train,
+        align_train       => tx_align_train, 
         
-        in_data0          => scrambled_data0,
-        in_data0k         => scrambled_data0k,
-        in_data1          => scrambled_data1,
-        in_data1k         => scrambled_data1k,
-
-        out_data0         => ch0_data0,
-        out_data0k        => ch0_data0k,
+        in_data           => scrambled_data(17 downto 0),
+        out_data          => ch0_data,
         out_data0forceneg => ch0_data0forceneg,
-        out_data1         => ch0_data1,
-        out_data1k        => ch0_data1k,
         out_data1forceneg => ch0_data1forceneg
     );
 
 i_data_to_8b10b: data_to_8b10b port map ( 
         clk           => symbolclk,
-        data0         => ch0_data0,
-        data0k        => ch0_data0k,
+        in_data       => ch0_data(17 downto 0),
+        out_data      => ch0_symbols(19 downto 0),
         data0forceneg => ch0_data0forceneg,
-        data1         => ch0_data1,
-        data1k        => ch0_data1k,
-        data1forceneg => ch0_data1forceneg,
-        symbol0       => ch0_symbol0,
-        symbol1       => ch0_symbol1
+        data1forceneg => ch0_data1forceneg
         );
 
 i_tx0: Transceiver Port map ( 
@@ -830,9 +752,7 @@ i_tx0: Transceiver Port map (
 
        refclk1_p       => refclk1_p,
        refclk1_n       => refclk1_n,
-
-       txsymbol0      => ch0_symbol0,
-       txsymbol1      => ch0_symbol1,
+       in_symbols      => ch0_symbols(19 downto 0),
                   
        gtptxp          => gtptxp,
        gtptxn          => gtptxn,

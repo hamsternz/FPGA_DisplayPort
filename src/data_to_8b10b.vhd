@@ -64,14 +64,10 @@ use IEEE.NUMERIC_STD.ALL;
 entity data_to_8b10b is
         port ( 
             clk           : in  std_logic;
-            data0         : in  std_logic_vector(7 downto 0);
-            data0k        : in  std_logic;
             data0forceneg : in  std_logic;
-            data1         : in  std_logic_vector(7 downto 0);
-            data1k        : in  std_logic;
             data1forceneg : in  std_logic;
-            symbol0       : out std_logic_vector(9 downto 0);
-            symbol1       : out std_logic_vector(9 downto 0)
+            in_data       : in  std_logic_vector(17 downto 0);
+            out_data      : out std_logic_vector(19 downto 0) := (others => '0')
         );
 end entity;
 
@@ -635,9 +631,15 @@ architecture arch of data_to_8b10b is
         "1000010111", "0111101000",  -- K30.7
         "XXXXXXXXXX", "XXXXXXXXXX"   -- K31.7
         );
-
+    signal data0  : std_logic_vector(7 downto 0);
+    signal data1  : std_logic_vector(7 downto 0);
+    signal data0k : std_logic;
+    signal data1k : std_logic;
 begin
-
+    data0  <= in_data(7 downto 0);
+    data0k <= in_data(8);
+    data1  <= in_data(16 downto 9);
+    data1k <= in_data(17);
 process(clk)
     variable index0 : unsigned(8 downto 0);
     variable index1 : unsigned(8 downto 0);
@@ -650,14 +652,14 @@ process(clk)
             index0 := unsigned(data0_2 & disparity0_neg_2);
             index1 := unsigned(data1_2 & disparity1_neg_2);
             if data0k_2 = '1' then
-                symbol0 <= k_symbols(to_integer(index0));
+                out_data(9 downto 0) <= k_symbols(to_integer(index0));
             else
-                symbol0 <= d_symbols(to_integer(index0));
+                out_data(9 downto 0) <= d_symbols(to_integer(index0));
             end if;
             if data1k_2 = '1' then
-                symbol1 <= k_symbols(to_integer(index1));
+                out_data(19 downto 10) <= k_symbols(to_integer(index1));
             else
-                symbol1 <= d_symbols(to_integer(index1));
+                out_data(19 downto 10) <= d_symbols(to_integer(index1));
             end if;
 
             -----------------------------------------------------------

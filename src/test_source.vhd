@@ -57,11 +57,7 @@ entity test_source is
     port ( 
         clk    : in  std_logic;
         ready  : out std_logic;
-        data0  : out std_logic_vector(7 downto 0);
-        data0k : out std_logic;
-        data1  : out std_logic_vector(7 downto 0);
-        data1k : out std_logic;
-        switch_point : out std_logic
+        data   : out std_logic_vector(72 downto 0) := (others => '0')
     );
 end test_source;
 
@@ -338,23 +334,25 @@ architecture arch of test_source is
 	SPARE, SPARE, SPARE, SPARE, SPARE, SPARE, SPARE, SPARE, SPARE, SPARE); 
 
     signal index : unsigned (10 downto 0) := (others => '0');  -- Index up to 32 x 64 symbol blocks
-    signal d0: std_logic_vector(8 downto 0);
-    signal d1: std_logic_vector(8 downto 0);
+    signal d0: std_logic_vector(8 downto 0)  := (others => '0');
+    signal d1: std_logic_vector(8 downto 0)  := (others => '0');
     signal line_count : unsigned(9 downto 0) := (others => '0');
     signal row_count  : unsigned(7 downto 0) := (others => '0');
+
+        
+    signal switch_point : std_logic := '0';
+
 begin
-    ready   <= '1';
-    data0   <= d0(7 downto 0);
-    data0k  <= d0(8);
-    data1   <= d1(7 downto 0);
-    data1k  <= d1(8);
+    ready              <= '1';
+    data(72)           <= switch_point;
+    data(71 downto 18) <= (others => '0');
+    data(17 downto 0)  <= d1 & d0; 
 
 process(clk)
      begin
         if rising_edge(clk) then
             d0   <= test_data_blocks(to_integer(index+0));
             d1   <= test_data_blocks(to_integer(index+1));
-            switch_point <= '0';
             if index(5 downto 0) = 52 then
                 index(5 downto 0) <= (others => '0');
                 if row_count = 131 then 
@@ -388,7 +386,7 @@ process(clk)
 	--- Block 17 - just blank end
                 
                 if line_count = 0 then
-                    if    row_count <  1 then  index(10 downto 6) <= "00001";  -- Main stream attribues plus BE
+                    if    row_count <  1 then  index(10 downto 6) <= "10001";  -- Just blank end BE
                     elsif row_count < 14 then  index(10 downto 6) <= "00010";  -- White *8 plus fill
                     elsif row_count < 15 then  index(10 downto 6) <= "00011";  -- White + Yellow plus fill                                                 
                     elsif row_count < 29 then  index(10 downto 6) <= "00100";  -- Yellow Pixels plus fill                                                 
@@ -406,7 +404,7 @@ process(clk)
                         index(10 downto 6) <= "00000";  -- Dummy symbols
                     end if;
                 elsif line_count < 599 then -- lines of active video (except first and last)
-                    if    row_count <  1 then  index(10 downto 6) <= "10001";  -- Just blank end
+                    if    row_count <  1 then  index(10 downto 6) <= "10001";  -- Just blank end BE
                     elsif row_count < 14 then  index(10 downto 6) <= "00010";  -- White *8 plus fill
                     elsif row_count < 15 then  index(10 downto 6) <= "00011";  -- White + Yellow plus fill                                                 
                     elsif row_count < 29 then  index(10 downto 6) <= "00100";  -- Yellow Pixels plus fill                                                 
@@ -447,6 +445,8 @@ process(clk)
                     -----------------------------------------------------------------                        
                     if row_count < 100 then
                         switch_point <= '1';
+                    else
+                        switch_point <= '0';
                     end if;
                     
                     if row_count = 100 then

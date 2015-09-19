@@ -3,48 +3,69 @@
    <wave_state>
    </wave_state>
    <db_ref_list>
-      <db_ref path="tb_transceiver_test_behav.wdb" id="1">
+      <db_ref path="tb_test_source_behav.wdb" id="1">
          <top_modules>
-            <top_module name="tb_transceiver_test" />
+            <top_module name="tb_test_source" />
          </top_modules>
       </db_ref>
    </db_ref_list>
-   <WVObjectSize size="8" />
-   <wvobject type="divider" fp_name="divider57">
-      <obj_property name="label">Inputs</obj_property>
-      <obj_property name="DisplayName">label</obj_property>
+   <WVObjectSize size="14" />
+   <wvobject db_ref_id="1" fp_name="/tb_test_source/clk" type="logic">
+      <obj_property name="ElementShortName">clk</obj_property>
+      <obj_property name="ObjectShortName">clk</obj_property>
+   </wvobject>
+   <wvobject db_ref_id="1" fp_name="/tb_test_source/test_signal_data" type="array">
+      <obj_property name="ElementShortName">test_signal_data[72:0]</obj_property>
+      <obj_property name="ObjectShortName">test_signal_data[72:0]</obj_property>
       <obj_property name="Radix">HEXRADIX</obj_property>
    </wvobject>
-   <wvobject db_ref_id="1" fp_name="/tb_transceiver_test/uut/ch0_data0k" type="logic">
-      <obj_property name="ElementShortName">ch0_data0k</obj_property>
-      <obj_property name="ObjectShortName">ch0_data0k</obj_property>
+   <wvobject db_ref_id="1" fp_name="/tb_test_source/test_signal_ready" type="logic">
+      <obj_property name="ElementShortName">test_signal_ready</obj_property>
+      <obj_property name="ObjectShortName">test_signal_ready</obj_property>
    </wvobject>
-   <wvobject db_ref_id="1" fp_name="/tb_transceiver_test/uut/ch0_data0" type="array">
-      <obj_property name="ElementShortName">ch0_data0[7:0]</obj_property>
-      <obj_property name="ObjectShortName">ch0_data0[7:0]</obj_property>
+   <wvobject db_ref_id="1" fp_name="/tb_test_source/msa_merged_data" type="array">
+      <obj_property name="ElementShortName">msa_merged_data[72:0]</obj_property>
+      <obj_property name="ObjectShortName">msa_merged_data[72:0]</obj_property>
       <obj_property name="Radix">HEXRADIX</obj_property>
    </wvobject>
-   <wvobject db_ref_id="1" fp_name="/tb_transceiver_test/uut/ch0_data1k" type="logic">
-      <obj_property name="ElementShortName">ch0_data1k</obj_property>
-      <obj_property name="ObjectShortName">ch0_data1k</obj_property>
+   <wvobject db_ref_id="1" fp_name="/tb_test_source/signal_data" type="array">
+      <obj_property name="ElementShortName">signal_data[71:0]</obj_property>
+      <obj_property name="ObjectShortName">signal_data[71:0]</obj_property>
    </wvobject>
-   <wvobject db_ref_id="1" fp_name="/tb_transceiver_test/uut/ch0_data1" type="array">
-      <obj_property name="ElementShortName">ch0_data1[7:0]</obj_property>
-      <obj_property name="ObjectShortName">ch0_data1[7:0]</obj_property>
-      <obj_property name="Radix">HEXRADIX</obj_property>
+   <wvobject db_ref_id="1" fp_name="/tb_test_source/sr_inserted_data" type="array">
+      <obj_property name="ElementShortName">sr_inserted_data[71:0]</obj_property>
+      <obj_property name="ObjectShortName">sr_inserted_data[71:0]</obj_property>
    </wvobject>
-   <wvobject db_ref_id="1" fp_name="/tb_transceiver_test/uut/ch0_symbol0" type="array">
-      <obj_property name="ElementShortName">ch0_symbol0[9:0]</obj_property>
-      <obj_property name="ObjectShortName">ch0_symbol0[9:0]</obj_property>
-      <obj_property name="Radix">HEXRADIX</obj_property>
+   <wvobject db_ref_id="1" fp_name="/tb_test_source/scramble_bypass" type="logic">
+      <obj_property name="ElementShortName">scramble_bypass</obj_property>
+      <obj_property name="ObjectShortName">scramble_bypass</obj_property>
    </wvobject>
-   <wvobject db_ref_id="1" fp_name="/tb_transceiver_test/uut/ch0_symbol1" type="array">
-      <obj_property name="ElementShortName">ch0_symbol1[9:0]</obj_property>
-      <obj_property name="ObjectShortName">ch0_symbol1[9:0]</obj_property>
-      <obj_property name="Radix">HEXRADIX</obj_property>
+   <wvobject db_ref_id="1" fp_name="/tb_test_source/scrambled_data" type="array">
+      <obj_property name="ElementShortName">scrambled_data[17:0]</obj_property>
+      <obj_property name="ObjectShortName">scrambled_data[17:0]</obj_property>
    </wvobject>
-   <wvobject db_ref_id="1" fp_name="/tb_transceiver_test/uut/gtptxp" type="logic">
-      <obj_property name="ElementShortName">gtptxp</obj_property>
-      <obj_property name="ObjectShortName">gtptxp</obj_property>
+   <wvobject db_ref_id="1" fp_name="/tb_test_source/ch0_data" type="array">
+      <obj_property name="ElementShortName">ch0_data[17:0]</obj_property>
+      <obj_property name="ObjectShortName">ch0_data[17:0]</obj_property>
+   </wvobject>
+   <wvobject db_ref_id="1" fp_name="/tb_test_source/ch0_data0forceneg" type="logic">
+      <obj_property name="ElementShortName">ch0_data0forceneg</obj_property>
+      <obj_property name="ObjectShortName">ch0_data0forceneg</obj_property>
+   </wvobject>
+   <wvobject db_ref_id="1" fp_name="/tb_test_source/ch0_data1forceneg" type="logic">
+      <obj_property name="ElementShortName">ch0_data1forceneg</obj_property>
+      <obj_property name="ObjectShortName">ch0_data1forceneg</obj_property>
+   </wvobject>
+   <wvobject db_ref_id="1" fp_name="/tb_test_source/ch0_symbols" type="array">
+      <obj_property name="ElementShortName">ch0_symbols[19:0]</obj_property>
+      <obj_property name="ObjectShortName">ch0_symbols[19:0]</obj_property>
+   </wvobject>
+   <wvobject db_ref_id="1" fp_name="/tb_test_source/dec0" type="array">
+      <obj_property name="ElementShortName">dec0[8:0]</obj_property>
+      <obj_property name="ObjectShortName">dec0[8:0]</obj_property>
+   </wvobject>
+   <wvobject db_ref_id="1" fp_name="/tb_test_source/rd" type="array">
+      <obj_property name="ElementShortName">rd[9:0]</obj_property>
+      <obj_property name="ObjectShortName">rd[9:0]</obj_property>
    </wvobject>
 </wave_config>

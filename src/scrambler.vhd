@@ -70,20 +70,13 @@ entity scrambler is
            bypass0    : in  STD_LOGIC;
            bypass1    : in  STD_LOGIC;
     
-           in_data0   : in  STD_LOGIC_VECTOR (7 downto 0);
-           in_data0k  : in  STD_LOGIC;
-           in_data1   : in  STD_LOGIC_VECTOR (7 downto 0);
-           in_data1k  : in  STD_LOGIC;
-           
-           out_data0  : out STD_LOGIC_VECTOR (7 downto 0);
-           out_data0k : out STD_LOGIC;
-           out_data1  : out STD_LOGIC_VECTOR (7 downto 0);
-           out_data1k : out STD_LOGIC);
+           in_data    : in  STD_LOGIC_VECTOR (17 downto 0);
+           out_data   : out STD_LOGIC_VECTOR (17 downto 0) := (others => '0'));
 end scrambler;
 
 architecture Behavioral of scrambler is
     signal lfsr_state : STD_LOGIC_VECTOR (15 downto 0) := (others => '1');
-    constant SR       : STD_LOGIC_VECTOR (7 downto 0)  := "00011100"; -- K28.0 ia used to reset the scrambler
+    constant SR       : STD_LOGIC_VECTOR ( 8 downto 0)  := "100011100"; -- K28.0 ia used to reset the scrambler
 begin
 
 process(clk)
@@ -95,24 +88,23 @@ process(clk)
             --------------------------------------------
             -- Process symbol 0
             --------------------------------------------        
-            if in_data0k = '1' or bypass0 = '1' then
+            if in_data(8) = '1' or bypass0 = '1' then
                 -- Bypass the scrambler for 'K' symbols (but still update LFSR state!)
-                out_data0  <= in_data0;
-                out_data0k <= in_data0k;
+                out_data(8 downto 0)  <= in_data(8 downto 0);
             else
-                out_data0(0) <= in_data0(0) xor s0(15);
-                out_data0(1) <= in_data0(1) xor s0(14);
-                out_data0(2) <= in_data0(2) xor s0(13);
-                out_data0(3) <= in_data0(3) xor s0(12);
-                out_data0(4) <= in_data0(4) xor s0(11);
-                out_data0(5) <= in_data0(5) xor s0(10);
-                out_data0(6) <= in_data0(6) xor s0( 9);
-                out_data0(7) <= in_data0(7) xor s0( 8);                
-                out_data0k <= '0';
+                out_data(0) <= in_data(0) xor s0(15);
+                out_data(1) <= in_data(1) xor s0(14);
+                out_data(2) <= in_data(2) xor s0(13);
+                out_data(3) <= in_data(3) xor s0(12);
+                out_data(4) <= in_data(4) xor s0(11);
+                out_data(5) <= in_data(5) xor s0(10);
+                out_data(6) <= in_data(6) xor s0( 9);
+                out_data(7) <= in_data(7) xor s0( 8);                
+                out_data(8) <= '0';
             end if; 
 
             -- generate intermediate scrambler state            
-            if in_data0k = '1' and in_data0 = SR then
+            if in_data(8 downto 0) = SR then
                 s1 := x"FFFF";    
             else
                 s1(0)  := s0(8);
@@ -136,25 +128,24 @@ process(clk)
             --------------------------------------------
             -- Process symbol 1
             --------------------------------------------        
-            if in_data1k = '1' or bypass1 = '1' then
+            if in_data(17) = '1' or bypass1 = '1' then
                 -- Bypass the scrambler for 'K' symbols (but still update LFSR state!)
-                out_data1  <= in_data1;
-                out_data1k <= in_data1k;
+                out_data(17 downto 9)  <= in_data(17 downto 9);
             else
                 -- Scramble symbol 1
-                out_data1(0) <= in_data1(0) xor s1(15);
-                out_data1(1) <= in_data1(1) xor s1(14);
-                out_data1(2) <= in_data1(2) xor s1(13);
-                out_data1(3) <= in_data1(3) xor s1(12);
-                out_data1(4) <= in_data1(4) xor s1(11);
-                out_data1(5) <= in_data1(5) xor s1(10);
-                out_data1(6) <= in_data1(6) xor s1( 9);
-                out_data1(7) <= in_data1(7) xor s1( 8);                
-                out_data1k <= '0';
+                out_data( 9) <= in_data( 9) xor s1(15);
+                out_data(10) <= in_data(10) xor s1(14);
+                out_data(11) <= in_data(11) xor s1(13);
+                out_data(12) <= in_data(12) xor s1(12);
+                out_data(13) <= in_data(13) xor s1(11);
+                out_data(14) <= in_data(14) xor s1(10);
+                out_data(15) <= in_data(15) xor s1( 9);
+                out_data(16) <= in_data(16) xor s1( 8);                
+                out_data(17) <= '0';
             end if; 
 
             -- Update scrambler state
-            if in_data1k = '1' and in_data1 = SR then
+            if in_data(17 downto 9) = SR then
                 lfsr_state <= x"FFFF";    
             else
                 lfsr_state(0)  <= s1(8);

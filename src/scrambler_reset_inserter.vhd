@@ -58,14 +58,8 @@ use IEEE.NUMERIC_STD.ALL;
 entity scrambler_reset_inserter is
         port ( 
             clk        : in  std_logic;
-            in_data0   : in  std_logic_vector(7 downto 0);
-            in_data0k  : in  std_logic;
-            in_data1   : in  std_logic_vector(7 downto 0);
-            in_data1k  : in  std_logic;
-            out_data0  : out std_logic_vector(7 downto 0);
-            out_data0k : out std_logic;
-            out_data1  : out std_logic_vector(7 downto 0);
-            out_data1k : out std_logic
+            in_data    : in  std_logic_vector(71 downto 0);
+            out_data   : out std_logic_vector(71 downto 0) := (others => '0')
         );
 end entity;
 
@@ -78,26 +72,28 @@ begin
 process(clk)
     begin
         if rising_edge(clk) then
-            out_data0k <= in_data0k;
-            out_data0  <= in_data0;
+            out_data  <= in_data;
             
-            out_data1k <= in_data1k;
-            out_data1  <= in_data1;
-
             ------------------------------------------------
             -- Subsitute every 513nd Blank start (BS) symbol
             -- with a Scrambler Reset (SR) symbol. 
             ------------------------------------------------
-            if in_data0k = '1' and in_data0 = BS(7 downto 0) then
+            if in_data(8 downto 0) = BS then
                 if bs_count = 511 then
-                    out_data0 <= SR(7 downto 0);
+                    out_data( 8 downto  0) <= SR;
+                    out_data(26 downto 18) <= SR;
+                    out_data(44 downto 36) <= SR;
+                    out_data(62 downto 54) <= SR;
                 end if;
                 bs_count <= bs_count + 1;
             end if;
 
-            if in_data1k = '1' and in_data1 = BS(7 downto 0) then
+            if in_data(17 downto 9) = BS then
                 if bs_count = 511 then
-                    out_data1 <= SR(7 downto 0);
+                    out_data(17 downto  9) <= SR;
+                    out_data(35 downto 27) <= SR;
+                    out_data(53 downto 45) <= SR;
+                    out_data(71 downto 63) <= SR;
                 end if;
                 bs_count <= bs_count + 1;
             end if;

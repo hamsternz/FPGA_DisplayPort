@@ -77,10 +77,8 @@ entity Transceiver is
            refclk1_p       : in  STD_LOGIC;
            refclk1_n       : in  STD_LOGIC;
 
-           symbolclk    : out STD_LOGIC;
-           
-           txsymbol0      : in  std_logic_vector(9 downto 0);
-           txsymbol1      : in  std_logic_vector(9 downto 0);
+           symbolclk       : out STD_LOGIC;
+           in_symbols      : in  std_logic_vector(19 downto 0);
            
            gtptxp         : out std_logic;
            gtptxn         : out std_logic);
@@ -184,10 +182,10 @@ i_gtx_tx_reset_controller: gtx_tx_reset_controller
 
     -------------  GT txdata_i Assignments for 20 bit datapath  -------  
 
-    txchardispmode  <= "00"    & txsymbol1(0)          & txsymbol0(0);
-    txchardispval   <= "00"    & txsymbol1(1)          & txsymbol0(1);
-    txdata_for_tx   <= x"0000" & txsymbol1(2) & txsymbol1(3) & txsymbol1(4) & txsymbol1(5) & txsymbol1(6) & txsymbol1(7) & txsymbol1(8) & txsymbol1(9)
-                               & txsymbol0(2) & txsymbol0(3) & txsymbol0(4) & txsymbol0(5) & txsymbol0(6) & txsymbol0(7) & txsymbol0(8) & txsymbol0(9);
+    txchardispmode  <= "00"    & in_symbols(10) & in_symbols( 0);
+    txchardispval   <= "00"    & in_symbols(11) & in_symbols( 1);
+    txdata_for_tx   <= x"0000" & in_symbols(12) & in_symbols(13) & in_symbols(14) & in_symbols(15) & in_symbols(16) & in_symbols(17) & in_symbols(18) & in_symbols(19)
+                               & in_symbols(2)  & in_symbols(3)  & in_symbols(4)  & in_symbols(5)  & in_symbols(6)  & in_symbols(7)  & in_symbols(8)  & in_symbols(9);
     TXCHARISK       <= "0000";              
 
 I_IBUFDS_GTE2_0 : IBUFDS_GTE2  

@@ -47,6 +47,7 @@
 --  Ver | Date       | Change
 --------+------------+---------------------------------------------------------------
 --  0.1 | 2015-09-17 | Initial Version
+--  0.2 | 2015-09-19 | Expanded to four channels
 ------------------------------------------------------------------------------------
 
 library IEEE;
@@ -58,16 +59,8 @@ entity idle_pattern_inserter is
             clk              : in  std_logic;
             channel_ready    : in  std_logic;
             source_ready     : in  std_logic;
-            in_data0         : in  std_logic_vector(7 downto 0);
-            in_data0k        : in  std_logic;
-            in_data1         : in  std_logic_vector(7 downto 0);
-            in_data1k        : in  std_logic;
-            in_switch_point  : in  std_logic;
-
-            out_data0        : out std_logic_vector(7 downto 0);
-            out_data0k       : out std_logic;
-            out_data1        : out std_logic_vector(7 downto 0);
-            out_data1k       : out std_logic
+            in_data          : in  std_logic_vector(72 downto 0); -- Bit 72 is the switch point indicator
+            out_data         : out std_logic_vector(71 downto 0) := (others => '0')
         );
 end entity; 
 
@@ -84,8 +77,7 @@ architecture arch of idle_pattern_inserter is
     constant Mvid   : std_logic_vector(8 downto 0) := "000000000";   -- 0x00
     constant Maud   : std_logic_vector(8 downto 0) := "000000000";   -- 0x00    
 
-    signal idle_d0: std_logic_vector(8 downto 0);
-    signal idle_d1: std_logic_vector(8 downto 0);
+    signal idle_data: std_logic_vector(17 downto 0) := (others => '0');
     signal channel_ready_i    : std_logic;
     signal channel_ready_meta : std_logic;
         
@@ -95,22 +87,17 @@ process(clk)
     begin
         if rising_edge(clk) then
             if count_to_switch(16) = '1' then
-                out_data0  <= in_data0;
-                out_data0k <= in_data0k;
-                out_data1  <= in_data1;
-                out_data1k <= in_data1k;
+                out_data  <= in_data(71 downto 0);
             else
-                out_data0   <= idle_d0(7 downto 0);
-                out_data0k  <= idle_d0(8);
-                out_data1   <= idle_d1(7 downto 0);
-                out_data1k  <= idle_d1(8);
                 -- send idle pattern
+                out_data   <= idle_data & idle_data & idle_data & idle_data;
             end if;
             if count_to_switch(16) = '0' then
                 -- The last tick over requires the source to be ready
                 -- and to be asserting that it is in the switch point.
                 if count_to_switch(15 downto 0) = x"FFFF" then
-                    if source_ready = '1' and in_switch_point = '1' and idle_switch_point = '1' then
+                    -- Bit 72 is the switch point indicator
+                    if source_ready = '1' and in_data(72)= '1' and idle_switch_point = '1' then
                         count_to_switch <= count_to_switch + 1;
                     end if;
                 else
@@ -132,61 +119,44 @@ process(clk)
             -- was seen. We need to send the next one 8192 symbols later (4096 cycles)
             -------------------------------------------------------------------------------            
             idle_switch_point <= '0';
+                -- For the even aligment
             if idle_count = 0 then
-                idle_d0 <= DUMMY;
-                idle_d1 <= DUMMY;
+                idle_data <= DUMMY & DUMMY;
             elsif idle_count = 2 then
-                idle_d0 <= BS;
-                idle_d1 <= VB_ID;             
+                idle_data <= VB_ID & BS;
             elsif idle_count = 4 then
-                idle_d0 <= Mvid;
-                idle_d1 <= Maud;
+                idle_data <= Maud & Mvid;
             elsif idle_count = 6 then
-                idle_d0 <= VB_ID;
-                idle_d1 <= Mvid;
+                idle_data <= Mvid & VB_ID ;
             elsif idle_count = 8 then
-                idle_d0 <= Maud;
-                idle_d1 <= VB_ID;
+                idle_data <= VB_ID & Maud;
             elsif idle_count = 10 then
-                idle_d0 <= Mvid;
-                idle_d1 <= Maud;
+                idle_data <= Maud & Mvid;
             elsif idle_count = 12 then
-                idle_d0 <= VB_ID;
-                idle_d1 <= Mvid;
+                idle_data <= Mvid & VB_ID;
             elsif idle_count = 14 then
-                idle_d0 <= Maud;
-                idle_d1 <= DUMMY;
-                
+                idle_data <= DUMMY & Maud;
+                -- For the odd aligment
             elsif idle_count = 1 then
-                idle_d0 <= DUMMY;
-                idle_d1 <= BS;
+                idle_data <= BS & DUMMY;
             elsif idle_count = 3 then
-                idle_d0 <= VB_ID;             
-                idle_d1 <= Mvid;
+                idle_data <= Mvid & VB_ID;             
             elsif idle_count = 5 then
-                idle_d0 <= Maud;
-                idle_d1 <= VB_ID;
+                idle_data <= VB_ID & Maud;
             elsif idle_count = 7 then
-                idle_d0 <= Mvid;
-                idle_d1 <= Maud;
+                idle_data <= Maud & Mvid;
             elsif idle_count = 9 then
-                idle_d0 <= VB_ID;
-                idle_d1 <= Mvid;
+                idle_data <= Mvid & VB_ID;
             elsif idle_count = 11 then
-                idle_d0 <= Maud;
-                idle_d1 <= VB_ID;
+                idle_data <= VB_ID & Maud;
             elsif idle_count = 12 then
-                idle_d0 <= VB_ID;
-                idle_d1 <= Mvid;
+                idle_data <= Mvid & VB_ID;
             elsif idle_count = 13 then
-                idle_d0 <= Mvid;
-                idle_d1 <= Maud;
+                idle_data <= Maud & Mvid;
             elsif idle_count = 15 then
-                idle_d0 <= DUMMY;
-                idle_d1 <= DUMMY;
+                idle_data <= DUMMY & DUMMY;
             else
-                idle_d0 <= DUMMY;
-                idle_d1 <= DUMMY;         -- can switch to the actual video at any other time
+                idle_data <= DUMMY & DUMMY; -- can switch to the actual video at any other time
                 idle_switch_point <= '1'; -- other than when the BS, VB-ID, Mvid, Maud sequence
             end if; 
 
@@ -197,16 +167,14 @@ process(clk)
             -- bit of count_to_switch being set)
             -------------------------------------------------------  
             if count_to_switch(16) = '1' then
-                if (in_data0k & in_data0) = BS then
+                if in_data(8 downto 0) = BS then
                     idle_count <= to_unsigned(2,idle_count'length);
-                elsif (in_data1k & in_data1) = BS then
+                elsif in_data(17 downto 9) = BS then
                     idle_count <= to_unsigned(1,idle_count'length);
                 end if; 
             end if; 
-
             channel_ready_i     <= channel_ready_meta; 
             channel_ready_meta  <= channel_ready;
-
         end if;
     end process;
 end architecture;
