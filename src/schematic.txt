@@ -1,0 +1,73 @@
+
++--------------+     +--------------+
+| Configuration|     | AUX Channel  |
+| State        +<--->| Interface    |
+| Maschine     |     |              |
++------+-------+     +----+---------+
+       |                  |
+       V                  V
+   Internal           1Mb/s AUX Channel
+   Control            to DisplayPort
+   Signals            Sink (screen)
+
+
++--------------+
+| Video source |
+| 800x600 or   |
+| 3840x2160    |
++------+-------+
+       | 73 bits
+       V
++------+-------+     +------+-------+
+| Stream       |     | Stream       |
+| Attribute    +<----+ Attribute    |
+| Merge        |     | Formatting   |
++------+-------+     +------+-------+
+       | 73 bits
+       V
++------+-------+     +------+-------+
+| Idle         |     | Idle Pattern |
+| Pattern      +<----+ Generator    |
+| Switch       |     |              |
++------+-------+     +------+-------+
+       | 72 bits
+       V
++------+-------+
+| Scrambler    |
+| Reset        |
+| Inserter     |
++------+-------+
+       | 72 bits
+       +------------------+-----------------+------------------+
+       | 18 bits          |                 |                  |
+       V                  V                 V                  V
++------+-------+   +------+-------+  +------+-------+   +------+-------+
+| Scrambler    |   | Scrambler    |  | Scrambler    |   | Scrambler    |  
++------+-------+   +------+-------+  +------+-------+   +------+-------+
+       |                  |                 |                  |
+       V                  V                 V                  V
++------+-------+   +------+-------+  +------+-------+   +------+-------+
+| Per-Channel  |   | Per-Channel  |  | Per-Channel  |   | Per-Channel  |
+| Skew Delay   |   | Skew Delay   |  | Skew Delay   |   | Skew Delay   |
++------+-------+   +------+-------+  +------+-------+   +------+-------+
+       |                  |                 |                  |
+       V                  V                 V                  V
++------+-------+   +------+-------+  +------+-------+   +------+-------+
+| Training     |   | Training     |  | Training     |   | Training     |
+| Pattern      |   | Pattern      |  | Pattern      |   | Pattern      |
+| Switch       |   | Switch       |  | Switch       |   | Switch       |
++------+-------+   +------+-------+  +------+-------+   +------+-------+
+       |                  |                 |                  |
+       V                  V                 V                  V
++------+-------+   +------+-------+  +------+-------+   +------+-------+
+| 8b/10b       |   | 8b/10b       |  | 8b/10b       |   | 8b/10b       |
+| Encoder      |   | Encoder      |  | Encoder      |   | Encoder      |
++------+-------+   +------+-------+  +------+-------+   +------+-------+ 
+       |                  |                 |                  |
+       V                  V                 V                  V
++------+-------+   +------+-------+  +------+-------+   +------+-------+
+| 2.7Gb/s  TX  |   | 2.7Gb/s  TX  |  | 2.7Gb/s  TX  |   | 2.7Gb/s  TX  |
++------+-------+   +------+-------+  +------+-------+   +------+-------+
+       |                  |                 |                  |
+       V                  V                 V                  V
+                      High speed serial outputs

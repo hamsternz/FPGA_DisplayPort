@@ -69,7 +69,7 @@ entity Transceiver is
            swing_0p6       : in  STD_LOGIC;
            swing_0p8       : in  STD_LOGIC;
 
-           tx_running      : out STD_LOGIC_VECTOR;
+           tx_running      : out STD_LOGIC_VECTOR := (others => '0');
 
            refclk0_p       : in  STD_LOGIC;
            refclk0_n       : in  STD_LOGIC;
@@ -86,9 +86,9 @@ end transceiver;
 
 architecture Behavioral of transceiver is
 
-    signal txchardispmode :   std_logic_vector( 4*gtptxp'length-1 downto 0) := (others => '0');
-    signal txchardispval  :   std_logic_vector( 4*gtptxp'length-1 downto 0) := (others => '0');
-    signal txdata_for_tx  :   std_logic_vector( 32*gtptxp'length-1 downto 0);
+    signal txchardispmode :   std_logic_vector( 4*gtptxp'length-1 downto 0)  := (others => '0');
+    signal txchardispval  :   std_logic_vector( 4*gtptxp'length-1 downto 0)  := (others => '0');
+    signal txdata_for_tx  :   std_logic_vector( 32*gtptxp'length-1 downto 0) := (others => '0');
     
     component gtx_tx_reset_controller is
     port (  clk             : in  std_logic;
@@ -292,7 +292,7 @@ g_tx: for i in 0 to gtptxp'high generate
     txdata_for_tx(32*i+ 5) <= in_symbols(4+20*i);
     txdata_for_tx(32*i+ 6) <= in_symbols(3+20*i);
     txdata_for_tx(32*i+ 7) <= in_symbols(2+20*i);
-    txchardispval (4*i+ 0) <= in_symbols( 1+20*i);
+    txchardispval (4*i+ 0) <= in_symbols(1+20*i);
     txchardispmode(4*i+ 0) <= in_symbols(0+20*i);
 
     txdata_for_tx(32*i+ 8) <= in_symbols(19+20*i);

@@ -65,6 +65,7 @@ entity link_signal_mgmt is
            -------------------------------------------
            sink_channel_count   : in  std_logic_vector(2 downto 0);
            source_channel_count : in  std_logic_vector(2 downto 0);
+           stream_channel_count : in  std_logic_vector(2 downto 0);
            active_channel_count : out std_logic_vector(2 downto 0);
            ---------------------------------------------------------
            powerup_channel : out std_logic_vector(3 downto 0) := (others => '0');
@@ -90,6 +91,8 @@ architecture arch of link_signal_mgmt is
     signal channel_state  : std_logic_vector(23 downto 0):= (others => '0');
     signal channel_adjust : std_logic_vector(15 downto 0):= (others => '0');
     signal active_channel_count_i : std_logic_vector(2 downto 0);
+    signal pipe_channel_count : std_logic_vector(2 downto 0);
+
 begin
     active_channel_count <= active_channel_count_i;
 process(mgmt_clk)
@@ -104,19 +107,37 @@ process(mgmt_clk)
             case source_channel_count is
                 when "100" =>
                     case sink_channel_count is
-                        when "100"  => active_channel_count_i <= "100"; power_mask <= "1111";
-                        when "010"  => active_channel_count_i <= "010"; power_mask <= "0011";
-                        when others => active_channel_count_i <= "001"; power_mask <= "0001";
+                        when "100"  => pipe_channel_count <= "100";
+                        when "010"  => pipe_channel_count <= "010";
+                        when others => pipe_channel_count <= "001";
                     end case;                        
                 when "010" =>
                     case sink_channel_count is
+                        when "100"  => pipe_channel_count <= "010";
+                        when "010"  => pipe_channel_count <= "010";
+                        when others => pipe_channel_count <= "001";
+                    end case;                                            
+                when others =>
+                    pipe_channel_count <= "001";
+            end case;
+           
+            case stream_channel_count is
+                when "100" =>
+                    case pipe_channel_count is
+                        when "100"  => active_channel_count_i <= "100"; power_mask <= "1111";
+                        when "010"  => active_channel_count_i <= "010"; power_mask <= "0000";
+                        when others => active_channel_count_i <= "000"; power_mask <= "0000";
+                    end case;                        
+                when "010" =>
+                    case pipe_channel_count is
                         when "100"  => active_channel_count_i <= "010"; power_mask <= "0011";
                         when "010"  => active_channel_count_i <= "010"; power_mask <= "0011";
-                        when others => active_channel_count_i <= "001"; power_mask <= "0001";
+                        when others => active_channel_count_i <= "000"; power_mask <= "0000";
                     end case;                                            
                 when others =>
                     active_channel_count_i <= "001"; power_mask <= "0001";
             end case;
+
             
             ---------------------------------------------
             -- If the powerup is not asserted, then reset 

@@ -3,69 +3,141 @@
    <wave_state>
    </wave_state>
    <db_ref_list>
-      <db_ref path="tb_test_source_behav.wdb" id="1">
+      <db_ref path="tb_aux_channel_behav2.wdb" id="1">
          <top_modules>
-            <top_module name="tb_test_source" />
+            <top_module name="tb_aux_channel" />
          </top_modules>
       </db_ref>
    </db_ref_list>
-   <WVObjectSize size="14" />
-   <wvobject db_ref_id="1" fp_name="/tb_test_source/clk" type="logic">
-      <obj_property name="ElementShortName">clk</obj_property>
-      <obj_property name="ObjectShortName">clk</obj_property>
+   <WVObjectSize size="31" />
+   <wvobject db_ref_id="1" fp_name="/tb_aux_channel/debug_pmod" type="array">
+      <obj_property name="ElementShortName">debug_pmod[7:0]</obj_property>
+      <obj_property name="ObjectShortName">debug_pmod[7:0]</obj_property>
    </wvobject>
-   <wvobject db_ref_id="1" fp_name="/tb_test_source/test_signal_data" type="array">
-      <obj_property name="ElementShortName">test_signal_data[72:0]</obj_property>
-      <obj_property name="ObjectShortName">test_signal_data[72:0]</obj_property>
+   <wvobject db_ref_id="1" fp_name="/tb_aux_channel/uut/i_link_signal_mgmt/powerup_channel" type="array">
+      <obj_property name="ElementShortName">powerup_channel[3:0]</obj_property>
+      <obj_property name="ObjectShortName">powerup_channel[3:0]</obj_property>
+   </wvobject>
+   <wvobject db_ref_id="1" fp_name="/tb_aux_channel/uut/i_link_signal_mgmt/tx_powerup" type="logic">
+      <obj_property name="ElementShortName">tx_powerup</obj_property>
+      <obj_property name="ObjectShortName">tx_powerup</obj_property>
+   </wvobject>
+   <wvobject db_ref_id="1" fp_name="/tb_aux_channel/uut/i_link_signal_mgmt/status_de" type="logic">
+      <obj_property name="ElementShortName">status_de</obj_property>
+      <obj_property name="ObjectShortName">status_de</obj_property>
+   </wvobject>
+   <wvobject db_ref_id="1" fp_name="/tb_aux_channel/uut/i_link_signal_mgmt/adjust_de" type="logic">
+      <obj_property name="ElementShortName">adjust_de</obj_property>
+      <obj_property name="ObjectShortName">adjust_de</obj_property>
+   </wvobject>
+   <wvobject db_ref_id="1" fp_name="/tb_aux_channel/uut/i_link_signal_mgmt/addr" type="array">
+      <obj_property name="ElementShortName">addr[7:0]</obj_property>
+      <obj_property name="ObjectShortName">addr[7:0]</obj_property>
       <obj_property name="Radix">HEXRADIX</obj_property>
    </wvobject>
-   <wvobject db_ref_id="1" fp_name="/tb_test_source/test_signal_ready" type="logic">
-      <obj_property name="ElementShortName">test_signal_ready</obj_property>
-      <obj_property name="ObjectShortName">test_signal_ready</obj_property>
-   </wvobject>
-   <wvobject db_ref_id="1" fp_name="/tb_test_source/msa_merged_data" type="array">
-      <obj_property name="ElementShortName">msa_merged_data[72:0]</obj_property>
-      <obj_property name="ObjectShortName">msa_merged_data[72:0]</obj_property>
+   <wvobject db_ref_id="1" fp_name="/tb_aux_channel/uut/i_link_signal_mgmt/data" type="array">
+      <obj_property name="ElementShortName">data[7:0]</obj_property>
+      <obj_property name="ObjectShortName">data[7:0]</obj_property>
       <obj_property name="Radix">HEXRADIX</obj_property>
    </wvobject>
-   <wvobject db_ref_id="1" fp_name="/tb_test_source/signal_data" type="array">
-      <obj_property name="ElementShortName">signal_data[71:0]</obj_property>
-      <obj_property name="ObjectShortName">signal_data[71:0]</obj_property>
+   <wvobject db_ref_id="1" fp_name="/tb_aux_channel/uut/i_link_signal_mgmt/sink_channel_count" type="array">
+      <obj_property name="ElementShortName">sink_channel_count[2:0]</obj_property>
+      <obj_property name="ObjectShortName">sink_channel_count[2:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
    </wvobject>
-   <wvobject db_ref_id="1" fp_name="/tb_test_source/sr_inserted_data" type="array">
-      <obj_property name="ElementShortName">sr_inserted_data[71:0]</obj_property>
-      <obj_property name="ObjectShortName">sr_inserted_data[71:0]</obj_property>
+   <wvobject db_ref_id="1" fp_name="/tb_aux_channel/uut/i_link_signal_mgmt/source_channel_count" type="array">
+      <obj_property name="ElementShortName">source_channel_count[2:0]</obj_property>
+      <obj_property name="ObjectShortName">source_channel_count[2:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
    </wvobject>
-   <wvobject db_ref_id="1" fp_name="/tb_test_source/scramble_bypass" type="logic">
-      <obj_property name="ElementShortName">scramble_bypass</obj_property>
-      <obj_property name="ObjectShortName">scramble_bypass</obj_property>
+   <wvobject db_ref_id="1" fp_name="/tb_aux_channel/uut/i_link_signal_mgmt/stream_channel_count" type="array">
+      <obj_property name="ElementShortName">stream_channel_count[2:0]</obj_property>
+      <obj_property name="ObjectShortName">stream_channel_count[2:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
    </wvobject>
-   <wvobject db_ref_id="1" fp_name="/tb_test_source/scrambled_data" type="array">
-      <obj_property name="ElementShortName">scrambled_data[17:0]</obj_property>
-      <obj_property name="ObjectShortName">scrambled_data[17:0]</obj_property>
+   <wvobject db_ref_id="1" fp_name="/tb_aux_channel/uut/i_link_signal_mgmt/active_channel_count" type="array">
+      <obj_property name="ElementShortName">active_channel_count[2:0]</obj_property>
+      <obj_property name="ObjectShortName">active_channel_count[2:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
    </wvobject>
-   <wvobject db_ref_id="1" fp_name="/tb_test_source/ch0_data" type="array">
-      <obj_property name="ElementShortName">ch0_data[17:0]</obj_property>
-      <obj_property name="ObjectShortName">ch0_data[17:0]</obj_property>
+   <wvobject db_ref_id="1" fp_name="/tb_aux_channel/uut/i_link_signal_mgmt/powerup_channel" type="array">
+      <obj_property name="ElementShortName">powerup_channel[3:0]</obj_property>
+      <obj_property name="ObjectShortName">powerup_channel[3:0]</obj_property>
    </wvobject>
-   <wvobject db_ref_id="1" fp_name="/tb_test_source/ch0_data0forceneg" type="logic">
-      <obj_property name="ElementShortName">ch0_data0forceneg</obj_property>
-      <obj_property name="ObjectShortName">ch0_data0forceneg</obj_property>
+   <wvobject db_ref_id="1" fp_name="/tb_aux_channel/uut/i_link_signal_mgmt/clock_locked" type="logic">
+      <obj_property name="ElementShortName">clock_locked</obj_property>
+      <obj_property name="ObjectShortName">clock_locked</obj_property>
    </wvobject>
-   <wvobject db_ref_id="1" fp_name="/tb_test_source/ch0_data1forceneg" type="logic">
-      <obj_property name="ElementShortName">ch0_data1forceneg</obj_property>
-      <obj_property name="ObjectShortName">ch0_data1forceneg</obj_property>
+   <wvobject db_ref_id="1" fp_name="/tb_aux_channel/uut/i_link_signal_mgmt/equ_locked" type="logic">
+      <obj_property name="ElementShortName">equ_locked</obj_property>
+      <obj_property name="ObjectShortName">equ_locked</obj_property>
    </wvobject>
-   <wvobject db_ref_id="1" fp_name="/tb_test_source/ch0_symbols" type="array">
-      <obj_property name="ElementShortName">ch0_symbols[19:0]</obj_property>
-      <obj_property name="ObjectShortName">ch0_symbols[19:0]</obj_property>
+   <wvobject db_ref_id="1" fp_name="/tb_aux_channel/uut/i_link_signal_mgmt/symbol_locked" type="logic">
+      <obj_property name="ElementShortName">symbol_locked</obj_property>
+      <obj_property name="ObjectShortName">symbol_locked</obj_property>
    </wvobject>
-   <wvobject db_ref_id="1" fp_name="/tb_test_source/dec0" type="array">
-      <obj_property name="ElementShortName">dec0[8:0]</obj_property>
-      <obj_property name="ObjectShortName">dec0[8:0]</obj_property>
+   <wvobject db_ref_id="1" fp_name="/tb_aux_channel/uut/i_link_signal_mgmt/align_locked" type="logic">
+      <obj_property name="ElementShortName">align_locked</obj_property>
+      <obj_property name="ObjectShortName">align_locked</obj_property>
    </wvobject>
-   <wvobject db_ref_id="1" fp_name="/tb_test_source/rd" type="array">
-      <obj_property name="ElementShortName">rd[9:0]</obj_property>
-      <obj_property name="ObjectShortName">rd[9:0]</obj_property>
+   <wvobject db_ref_id="1" fp_name="/tb_aux_channel/uut/i_link_signal_mgmt/preemp_0p0" type="logic">
+      <obj_property name="ElementShortName">preemp_0p0</obj_property>
+      <obj_property name="ObjectShortName">preemp_0p0</obj_property>
+   </wvobject>
+   <wvobject db_ref_id="1" fp_name="/tb_aux_channel/uut/i_link_signal_mgmt/preemp_3p5" type="logic">
+      <obj_property name="ElementShortName">preemp_3p5</obj_property>
+      <obj_property name="ObjectShortName">preemp_3p5</obj_property>
+   </wvobject>
+   <wvobject db_ref_id="1" fp_name="/tb_aux_channel/uut/i_link_signal_mgmt/preemp_6p0" type="logic">
+      <obj_property name="ElementShortName">preemp_6p0</obj_property>
+      <obj_property name="ObjectShortName">preemp_6p0</obj_property>
+   </wvobject>
+   <wvobject db_ref_id="1" fp_name="/tb_aux_channel/uut/i_link_signal_mgmt/swing_0p4" type="logic">
+      <obj_property name="ElementShortName">swing_0p4</obj_property>
+      <obj_property name="ObjectShortName">swing_0p4</obj_property>
+   </wvobject>
+   <wvobject db_ref_id="1" fp_name="/tb_aux_channel/uut/i_link_signal_mgmt/swing_0p6" type="logic">
+      <obj_property name="ElementShortName">swing_0p6</obj_property>
+      <obj_property name="ObjectShortName">swing_0p6</obj_property>
+   </wvobject>
+   <wvobject db_ref_id="1" fp_name="/tb_aux_channel/uut/i_link_signal_mgmt/swing_0p8" type="logic">
+      <obj_property name="ElementShortName">swing_0p8</obj_property>
+      <obj_property name="ObjectShortName">swing_0p8</obj_property>
+   </wvobject>
+   <wvobject db_ref_id="1" fp_name="/tb_aux_channel/uut/i_link_signal_mgmt/power_mask" type="array">
+      <obj_property name="ElementShortName">power_mask[3:0]</obj_property>
+      <obj_property name="ObjectShortName">power_mask[3:0]</obj_property>
+   </wvobject>
+   <wvobject db_ref_id="1" fp_name="/tb_aux_channel/uut/i_link_signal_mgmt/preemp_level" type="array">
+      <obj_property name="ElementShortName">preemp_level[1:0]</obj_property>
+      <obj_property name="ObjectShortName">preemp_level[1:0]</obj_property>
+   </wvobject>
+   <wvobject db_ref_id="1" fp_name="/tb_aux_channel/uut/i_link_signal_mgmt/voltage_level" type="array">
+      <obj_property name="ElementShortName">voltage_level[1:0]</obj_property>
+      <obj_property name="ObjectShortName">voltage_level[1:0]</obj_property>
+   </wvobject>
+   <wvobject db_ref_id="1" fp_name="/tb_aux_channel/uut/i_link_signal_mgmt/channel_state" type="array">
+      <obj_property name="ElementShortName">channel_state[23:0]</obj_property>
+      <obj_property name="ObjectShortName">channel_state[23:0]</obj_property>
+   </wvobject>
+   <wvobject db_ref_id="1" fp_name="/tb_aux_channel/uut/i_link_signal_mgmt/channel_adjust" type="array">
+      <obj_property name="ElementShortName">channel_adjust[15:0]</obj_property>
+      <obj_property name="ObjectShortName">channel_adjust[15:0]</obj_property>
+   </wvobject>
+   <wvobject db_ref_id="1" fp_name="/tb_aux_channel/uut/i_link_signal_mgmt/active_channel_count_i" type="array">
+      <obj_property name="ElementShortName">active_channel_count_i[2:0]</obj_property>
+      <obj_property name="ObjectShortName">active_channel_count_i[2:0]</obj_property>
+   </wvobject>
+   <wvobject db_ref_id="1" fp_name="/tb_aux_channel/uut/i_link_signal_mgmt/pipe_channel_count" type="array">
+      <obj_property name="ElementShortName">pipe_channel_count[2:0]</obj_property>
+      <obj_property name="ObjectShortName">pipe_channel_count[2:0]</obj_property>
+   </wvobject>
+   <wvobject db_ref_id="1" fp_name="/tb_aux_channel/uut/dp_reg_de" type="logic">
+      <obj_property name="ElementShortName">dp_reg_de</obj_property>
+      <obj_property name="ObjectShortName">dp_reg_de</obj_property>
+   </wvobject>
+   <wvobject db_ref_id="1" fp_name="/tb_aux_channel/uut/i_dp_reg_decode/link_count" type="array">
+      <obj_property name="ElementShortName">link_count[3:0]</obj_property>
+      <obj_property name="ObjectShortName">link_count[3:0]</obj_property>
    </wvobject>
 </wave_config>

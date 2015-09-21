@@ -55,6 +55,32 @@ use IEEE.NUMERIC_STD.ALL;
 
 entity test_source_800_600_RGB_444_ch1 is
     port ( 
+        -----------------------------------------------------
+        -- The MSA values (some are range reduced and could 
+        -- be 16 bits ins size)
+        -----------------------------------------------------      
+        M_value              : out std_logic_vector(23 downto 0);
+        N_value              : out std_logic_vector(23 downto 0);
+        H_visible            : out std_logic_vector(11 downto 0);
+        V_visible            : out std_logic_vector(11 downto 0);
+        H_total              : out std_logic_vector(11 downto 0);
+        V_total              : out std_logic_vector(11 downto 0);
+        H_sync_width         : out std_logic_vector(11 downto 0);
+        V_sync_width         : out std_logic_vector(11 downto 0);
+        H_start              : out std_logic_vector(11 downto 0);
+        V_start              : out std_logic_vector(11 downto 0);
+        H_vsync_active_high  : out std_logic;
+        V_vsync_active_high  : out std_logic;
+        flag_sync_clock      : out std_logic;
+        flag_YCCnRGB         : out std_logic;
+        flag_422n444         : out std_logic;
+        flag_YCC_colour_709  : out std_logic;
+        flag_range_reduced   : out std_logic;
+        flag_interlaced_even : out std_logic;
+        flags_3d_Indicators  : out std_logic_vector(1 downto 0);
+        bits_per_colour      : out std_logic_vector(4 downto 0);
+        stream_channel_count : out std_logic_vector(2 downto 0);
+
         clk    : in  std_logic;
         ready  : out std_logic;
         data   : out std_logic_vector(72 downto 0) := (others => '0')
@@ -343,6 +369,28 @@ architecture arch of test_source_800_600_RGB_444_ch1 is
     signal switch_point : std_logic := '0';
 
 begin
+    M_value              <= x"012F68";
+    N_value              <= x"080000";
+    H_visible            <= x"320";  -- 800
+    V_visible            <= x"258";  -- 600
+    H_total              <= x"420";  -- 1056
+    V_total              <= x"274";  -- 628
+    H_sync_width         <= x"080";  -- 128
+    V_sync_width         <= x"004";   -- 4
+    H_start              <= x"0D8";  -- 216 
+    V_start              <= x"01b";  -- 37
+    H_vsync_active_high  <= '0';
+    V_vsync_active_high  <= '0';
+    flag_sync_clock      <= '1';
+    flag_YCCnRGB         <= '0';
+    flag_422n444         <= '0';
+    flag_range_reduced   <= '0';
+    flag_interlaced_even <= '0';
+    flag_YCC_colour_709  <= '0';
+    flags_3d_Indicators  <= (others => '0');
+    bits_per_colour      <= "01000";
+
+    stream_channel_count <= "001"; 
     ready              <= '1';
     data(72)           <= switch_point;
     data(71 downto 18) <= (others => '0');

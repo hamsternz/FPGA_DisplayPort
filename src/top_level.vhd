@@ -92,6 +92,32 @@ architecture Behavioral of top_level is
     
     component test_source_800_600_RGB_444_ch1 is
         port ( 
+            -----------------------------------------------------
+            -- The MSA values (some are range reduced and could 
+            -- be 16 bits ins size)
+            -----------------------------------------------------      
+            M_value              : out std_logic_vector(23 downto 0);
+            N_value              : out std_logic_vector(23 downto 0);
+            H_visible            : out std_logic_vector(11 downto 0);
+            V_visible            : out std_logic_vector(11 downto 0);
+            H_total              : out std_logic_vector(11 downto 0);
+            V_total              : out std_logic_vector(11 downto 0);
+            H_sync_width         : out std_logic_vector(11 downto 0);
+            V_sync_width         : out std_logic_vector(11 downto 0);
+            H_start              : out std_logic_vector(11 downto 0);
+            V_start              : out std_logic_vector(11 downto 0);
+            H_vsync_active_high  : out std_logic;
+            V_vsync_active_high  : out std_logic;
+            flag_sync_clock      : out std_logic;
+            flag_YCCnRGB         : out std_logic;
+            flag_422n444         : out std_logic;
+            flag_YCC_colour_709  : out std_logic;
+            flag_range_reduced   : out std_logic;
+            flag_interlaced_even : out std_logic;
+            flags_3d_Indicators  : out std_logic_vector(1 downto 0);
+            bits_per_colour      : out std_logic_vector(4 downto 0);
+            stream_channel_count : out std_logic_vector(2 downto 0);
+
             clk    : in  std_logic;
             ready  : out std_logic;
             data   : out std_logic_vector(72 downto 0) := (others => '0')
@@ -100,6 +126,32 @@ architecture Behavioral of top_level is
 
     component test_source_3840_2160_YCC_422_ch2 is
         port ( 
+            -----------------------------------------------------
+            -- The MSA values (some are range reduced and could 
+            -- be 16 bits ins size)
+            -----------------------------------------------------      
+            M_value              : out std_logic_vector(23 downto 0);
+            N_value              : out std_logic_vector(23 downto 0);
+            H_visible            : out std_logic_vector(11 downto 0);
+            V_visible            : out std_logic_vector(11 downto 0);
+            H_total              : out std_logic_vector(11 downto 0);
+            V_total              : out std_logic_vector(11 downto 0);
+            H_sync_width         : out std_logic_vector(11 downto 0);
+            V_sync_width         : out std_logic_vector(11 downto 0);
+            H_start              : out std_logic_vector(11 downto 0);
+            V_start              : out std_logic_vector(11 downto 0);
+            H_vsync_active_high  : out std_logic;
+            V_vsync_active_high  : out std_logic;
+            flag_sync_clock      : out std_logic;
+            flag_YCCnRGB         : out std_logic;
+            flag_422n444         : out std_logic;
+            flag_YCC_colour_709  : out std_logic;
+            flag_range_reduced   : out std_logic;
+            flag_interlaced_even : out std_logic;
+            flags_3d_Indicators  : out std_logic_vector(1 downto 0);
+            bits_per_colour      : out std_logic_vector(4 downto 0);
+            stream_channel_count : out std_logic_vector(2 downto 0);
+
             clk    : in  std_logic;
             ready  : out std_logic;
             data   : out std_logic_vector(72 downto 0) := (others => '0')
@@ -144,6 +196,27 @@ architecture Behavioral of top_level is
             in_data              : in  std_logic_vector(72 downto 0);
             out_data             : out std_logic_vector(72 downto 0));
     end component;
+
+    signal M_value              : std_logic_vector(23 downto 0);
+    signal N_value              : std_logic_vector(23 downto 0);
+    signal H_visible            : std_logic_vector(11 downto 0);
+    signal V_visible            : std_logic_vector(11 downto 0);
+    signal H_total              : std_logic_vector(11 downto 0);
+    signal V_total              : std_logic_vector(11 downto 0);
+    signal H_sync_width         : std_logic_vector(11 downto 0);
+    signal V_sync_width         : std_logic_vector(11 downto 0);
+    signal H_start              : std_logic_vector(11 downto 0);
+    signal V_start              : std_logic_vector(11 downto 0);
+    signal H_vsync_active_high  : std_logic;
+    signal V_vsync_active_high  : std_logic;
+    signal flag_sync_clock      : std_logic;
+    signal flag_YCCnRGB         : std_logic;
+    signal flag_422n444         : std_logic;
+    signal flag_YCC_colour_709  : std_logic;
+    signal flag_range_reduced   : std_logic;
+    signal flag_interlaced_even : std_logic;
+    signal flags_3d_Indicators  : std_logic_vector(1 downto 0);
+    signal bits_per_colour      : std_logic_vector(4 downto 0);
 
     component insert_main_stream_attrbutes_two_channels is
         port (
@@ -233,6 +306,7 @@ architecture Behavioral of top_level is
 
                sink_channel_count   : in  std_logic_vector(2 downto 0);
                source_channel_count : in  std_logic_vector(2 downto 0);
+               stream_channel_count : in  std_logic_vector(2 downto 0);
                active_channel_count : out std_logic_vector(2 downto 0);
 
                powerup_channel : out std_logic_vector(3 downto 0);
@@ -482,9 +556,10 @@ architecture Behavioral of top_level is
     ------------------------------------------------
     signal interface_debug : std_logic_vector(7 downto 0);
 
-    signal sink_channel_count   : std_logic_vector(2 downto 0) := "100";
-    signal source_channel_count : std_logic_vector(2 downto 0) := "001";
+    signal sink_channel_count   : std_logic_vector(2 downto 0) := "000";
+    signal source_channel_count : std_logic_vector(2 downto 0) := "010";
     signal active_channel_count : std_logic_vector(2 downto 0) := "000";
+    signal stream_channel_count : std_logic_vector(2 downto 0) := "000";
 
     signal debug       : std_logic_vector(7 downto 0);
     signal test_signal : std_logic_vector(8 downto 0);
@@ -492,14 +567,14 @@ architecture Behavioral of top_level is
     signal scramble_bypass        : std_logic;
     signal test_signal_ready      : std_logic;
     
-    signal test_signal_data    : std_logic_vector(72 downto 0);  -- With switching point
-    signal msa_merged_data     : std_logic_vector(72 downto 0);  -- With switching point
-    signal signal_data         : std_logic_vector(71 downto 0);
-    signal sr_inserted_data    : std_logic_vector(71 downto 0);    
-    signal scrambled_data      : std_logic_vector(71 downto 0);
-    signal final_data          : std_logic_vector(71 downto 0);
-    signal force_parity_neg    : std_logic_vector( 7 downto 0);
-    signal symbols             : std_logic_vector(79 downto 0);
+    signal test_signal_data    : std_logic_vector(72 downto 0) := (others => '0');  -- With switching point
+    signal msa_merged_data     : std_logic_vector(72 downto 0) := (others => '0');  -- With switching point
+    signal signal_data         : std_logic_vector(71 downto 0) := (others => '0');
+    signal sr_inserted_data    : std_logic_vector(71 downto 0) := (others => '0');    
+    signal scrambled_data      : std_logic_vector(71 downto 0) := (others => '0');
+    signal final_data          : std_logic_vector(71 downto 0) := (others => '0');
+    signal force_parity_neg    : std_logic_vector( 7 downto 0) := (others => '0');
+    signal symbols             : std_logic_vector(79 downto 0) := (others => '0');
     
     signal hpd_irq     : std_logic;
     signal hpd_present : std_logic;
@@ -510,7 +585,7 @@ architecture Behavioral of top_level is
 
     constant delay_index : std_logic_vector(7 downto 0) := "11100100"; -- 3,2,1,0 for in the gneerate loop
 begin
-
+    sink_channel_count <= dp_link_count(2 downto 0);
 process(clk)
     begin
         if rising_edge(clk) then
@@ -645,6 +720,7 @@ i_link_signal_mgmt:  link_signal_mgmt Port map (
         sink_channel_count   => sink_channel_count,
         source_channel_count => source_channel_count,
         active_channel_count => active_channel_count,
+        stream_channel_count => stream_channel_count,
 
         powerup_channel => powerup_channel,
 
@@ -672,6 +748,30 @@ i_link_signal_mgmt:  link_signal_mgmt Port map (
 
 --i_test_source: test_source_800_600_RGB_444_ch1  port map ( 
 i_test_source: test_source_3840_2160_YCC_422_ch2  port map ( 
+            M_value              => M_value,
+            N_value              => N_value,
+            
+            H_visible            => H_visible,
+            H_total              => H_total,
+            H_sync_width         => H_sync_width,
+            H_start              => H_start,    
+            
+            V_visible            => V_visible,
+            V_total              => V_total,
+            V_sync_width         => V_sync_width,
+            V_start              => V_start,
+            H_vsync_active_high  => H_vsync_active_high,
+            V_vsync_active_high  => V_vsync_active_high,
+            flag_sync_clock      => flag_sync_clock,
+            flag_YCCnRGB         => flag_YCCnRGB,
+            flag_422n444         => flag_422n444,
+            flag_range_reduced   => flag_range_reduced,
+            flag_interlaced_even => flag_interlaced_even,
+            flag_YCC_colour_709  => flag_YCC_colour_709,
+            flags_3d_Indicators  => flags_3d_Indicators,
+            bits_per_colour      => bits_per_colour, 
+            stream_channel_count => stream_channel_count,
+
             clk          => symbolclk,
             ready        => test_signal_ready,
             data         => test_signal_data
@@ -685,28 +785,28 @@ i_insert_main_stream_attrbutes_two_channels: insert_main_stream_attrbutes_two_ch
             -- The MSA values (some are range reduced and could 
             -- be 16 bits ins size)
             -----------------------------------------------------      
-            M_value              => x"07DA13", -- For 265MHz/270Mhz
-            N_value              => x"080000",
+            M_value              => M_value,
+            N_value              => N_value,
+
+            H_visible            => H_visible,
+            H_total              => H_total,
+            H_sync_width         => H_sync_width,
+            H_start              => H_start,    
      
-            V_visible            => x"870",  -- 2160
-            V_total              => x"88F", -- 2191
-            V_sync_width         => x"003",  -- 3
-            V_start              => x"01A",  -- 26
-            
-            H_visible            => x"F00",  -- 3840
-            H_total              => x"FC0",  -- 1056
-            H_sync_width         => x"030",  -- 128
-            H_start              => x"0A0",  -- 26 
-            H_vsync_active_high  => '1',
-            V_vsync_active_high  => '1',
-            flag_sync_clock      => '1',
-            flag_YCCnRGB         => '1',
-            flag_422n444         => '1',
-            flag_range_reduced   => '1',
-            flag_interlaced_even => '0',
-            flag_YCC_colour_709  => '0',
-            flags_3d_Indicators  => (others => '0'),
-            bits_per_colour      => "01000",
+            V_visible            => V_visible,
+            V_total              => V_total,
+            V_sync_width         => V_sync_width,
+            V_start              => V_start,
+            H_vsync_active_high  => H_vsync_active_high,
+            V_vsync_active_high  => V_vsync_active_high,
+            flag_sync_clock      => flag_sync_clock,
+            flag_YCCnRGB         => flag_YCCnRGB,
+            flag_422n444         => flag_422n444,
+            flag_range_reduced   => flag_range_reduced,
+            flag_interlaced_even => flag_interlaced_even,
+            flag_YCC_colour_709  => flag_YCC_colour_709,
+            flags_3d_Indicators  => flags_3d_Indicators,
+            bits_per_colour      => bits_per_colour, 
             -----------------------------------------------------
             -- The stream of pixel data coming in
             -----------------------------------------------------

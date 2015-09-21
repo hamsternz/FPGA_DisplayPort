@@ -60,6 +60,32 @@ use IEEE.NUMERIC_STD.ALL;
 
 entity test_source_3840_2160_YCC_422_ch2 is
     port ( 
+        -----------------------------------------------------
+        -- The MSA values (some are range reduced and could 
+        -- be 16 bits ins size)
+        -----------------------------------------------------      
+        M_value              : out std_logic_vector(23 downto 0);
+        N_value              : out std_logic_vector(23 downto 0);
+        H_visible            : out std_logic_vector(11 downto 0);
+        V_visible            : out std_logic_vector(11 downto 0);
+        H_total              : out std_logic_vector(11 downto 0);
+        V_total              : out std_logic_vector(11 downto 0);
+        H_sync_width         : out std_logic_vector(11 downto 0);
+        V_sync_width         : out std_logic_vector(11 downto 0);
+        H_start              : out std_logic_vector(11 downto 0);
+        V_start              : out std_logic_vector(11 downto 0);
+        H_vsync_active_high  : out std_logic;
+        V_vsync_active_high  : out std_logic;
+        flag_sync_clock      : out std_logic;
+        flag_YCCnRGB         : out std_logic;
+        flag_422n444         : out std_logic;
+        flag_YCC_colour_709  : out std_logic;
+        flag_range_reduced   : out std_logic;
+        flag_interlaced_even : out std_logic;
+        flags_3d_Indicators  : out std_logic_vector(1 downto 0);
+        bits_per_colour      : out std_logic_vector(4 downto 0);
+        stream_channel_count : out std_logic_vector(2 downto 0);
+            
         clk    : in  std_logic;
         ready  : out std_logic;
         data   : out std_logic_vector(72 downto 0) := (others => '0')
@@ -71,8 +97,8 @@ architecture arch of test_source_3840_2160_YCC_422_ch2 is
     
     constant DUMMY  : std_logic_vector(8 downto 0) := "000000011";   -- 0xAA
     constant ZERO   : std_logic_vector(8 downto 0) := "000000000";   -- 0x00
-    constant PIX_Y0 : std_logic_vector(8 downto 0) := "011000000";   -- 0xC0
-    constant PIX_Y1 : std_logic_vector(8 downto 0) := "011000000";   -- 0xC0
+    constant PIX_Y0 : std_logic_vector(8 downto 0) := "010000000";   -- 0xC0
+    constant PIX_Y1 : std_logic_vector(8 downto 0) := "010000000";   -- 0xC0
     constant PIX_Cb : std_logic_vector(8 downto 0) := "010000000";   -- 0x80
     constant PIX_Cr : std_logic_vector(8 downto 0) := "010000000";   -- 0x80
 
@@ -90,18 +116,44 @@ architecture arch of test_source_3840_2160_YCC_422_ch2 is
     constant Maud   : std_logic_vector(8 downto 0) := "000000000";   -- 0x00    
 
     signal   col_count     : unsigned(11 downto 0) := (others => '0');
-    constant max_col_count : unsigned(11 downto 0) := to_unsigned(2054,12); -- (3840+32+48+112)*270/265-1
+    constant max_col_count : unsigned(11 downto 0) := to_unsigned(2053,12); -- (3840+32+48+112)*270/265-1
     
     signal   line_count      : unsigned(11 downto 0) := (others => '0');
-    constant max_line_count  : unsigned(11 downto 0) := to_unsigned(2182,12); -- 2160+5+3+23     -1
-    constant max_active_line : unsigned(11 downto 0) := to_unsigned(2159,12); -- 2160+5+3+23     -1
+    constant max_line_count  : unsigned(11 downto 0) := to_unsigned(2190,12); -- 2160+5+3+23     -1
+    constant max_active_line : unsigned(11 downto 0) := to_unsigned(2159,12); -- 2160     -1
     
-    signal block_count  : unsigned(4 downto 0) := (others => '0');
+    signal block_count  : unsigned(5 downto 0) := (others => '0');
     signal switch_point : std_logic := '0';
-    signal active_line  : std_logic := '0';
+    signal active_line  : std_logic := '1';
     signal phase        : std_logic := '0';
 
 begin
+
+    M_value              <= x"07DA1C"; -- For 265MHz/270Mhz
+    N_value              <= x"080000";
+
+    H_visible            <= x"F00";  -- 3840
+    H_total              <= x"FC0";  -- 4032
+    H_sync_width         <= x"030";  -- 128
+    H_start              <= x"0A0";  -- 160 
+
+    V_visible            <= x"870";  -- 2160
+    V_total              <= x"88F"; -- 2191
+    V_sync_width         <= x"003";  -- 3
+    V_start              <= x"01A";  -- 26
+    
+    H_vsync_active_high  <= '1';
+    V_vsync_active_high  <= '1';
+    flag_sync_clock      <= '1';
+    flag_YCCnRGB         <= '1';
+    flag_422n444         <= '1';
+    flag_range_reduced   <= '1';
+    flag_interlaced_even <= '0';
+    flag_YCC_colour_709  <= '0';
+    flags_3d_Indicators  <= (others => '0');
+    bits_per_colour      <= "01000";
+    stream_channel_count <= "010";
+
     ready              <= '1';
     data(72)           <= switch_point;
     data(71 downto 36) <= (others => '0');
@@ -109,36 +161,34 @@ process(clk)
      begin
         if rising_edge(clk) then
             switch_point <= '0';
+            block_count <= block_count+1; 
             if col_count = 0 then
                 if active_line = '1' then
-                    data(35 downto 0) <= ZERO & ZERO & BE & BE;
+                    data(35 downto 0) <= BE & DUMMY & BE & DUMMY;
                 else
-                    data(35 downto 0) <= ZERO & ZERO & DUMMY & DUMMY;
+                    data(35 downto 0) <= DUMMY & DUMMY & DUMMY & DUMMY;
                 end if; 
                 phase       <= '0';
                 block_count <= (others => '0');
                 -- we do this here to get the VB_ID field correct
-                if line_count = max_line_count then
-                    active_line <= '1';
-                end if; 
-            elsif col_count < 3913 then
+            elsif col_count < 1957 then
                 ------------------------------------
                 -- Pixel data goes here
                 ------------------------------------
                 if active_line = '1' then
                     if block_count = 26 then
                         if phase = '0' then
-                            data(35 downto 0) <= FE & FE & PIX_Cr & PIX_Cb;
+                            data(35 downto 0) <= FE & PIX_Cr & FE & PIX_Cb;
                         else
-                            data(35 downto 0) <= FE & FE & PIX_Y1 & PIX_Y0;
+                            data(35 downto 0) <= FE & PIX_Y1 & FE & PIX_Y0;
                         end if;
                         block_count <= (others => '0');
                         phase <= not phase;
                     else
                         if phase = '0' then
-                            data(35 downto 0) <= PIX_Y1 & PIX_Y0 & PIX_Cr & PIX_Cb;
+                            data(35 downto 0) <= PIX_Y1 & PIX_Cr & PIX_Y0 & PIX_Cb;
                         else
-                            data(35 downto 0) <= PIX_Cr & PIX_Cb & PIX_Y1 & PIX_Y0;
+                            data(35 downto 0) <= PIX_Cr & PIX_Y1 & PIX_Cb & PIX_Y0;
                         end if;
                         block_count <= block_count + 1; 
                     end if;
@@ -146,23 +196,42 @@ process(clk)
                     data(35 downto 0) <= DUMMY & DUMMY & DUMMY & DUMMY;
                     switch_point <= '1';
                 end if; 
-            elsif col_count = 1956 then
+            elsif col_count = 1957 then
                 if active_line = '1' then
-                    data(35 downto 0) <= VB_NVS & VB_NVS & BS & BS;
+                    data(35 downto 0) <= VB_NVS & BS & VB_NVS & BS;
                 else
-                    data(35 downto 0) <= VB_VS  & VB_VS  & BS & BS;
+                    data(35 downto 0) <= VB_VS  & BS & VB_VS  & BS;
                 end if;
-            elsif col_count = 3914 then
-                data(35 downto 0) <= Maud  & Maud & Mvid  & Mvid;
-            elsif col_count = 3915 then    
+            elsif col_count = 1958 then
+                data(35 downto 0) <= Maud  & Mvid & Maud  & Mvid;
+            elsif col_count = 1959 then    
                 if active_line = '1' then
-                    data(35 downto 0) <= Mvid  & Mvid & VB_NVS  & VB_NVS;
+                    data(35 downto 0) <= Mvid  & VB_NVS  & Mvid & VB_NVS;
                 else 
-                    data(35 downto 0) <= Mvid  & Mvid & VB_VS  & VB_VS;
+                    data(35 downto 0) <= Mvid  & VB_VS  & Mvid & VB_VS;
                 end if;
-            elsif col_count = 3917 then   data(35 downto 0) <= DUMMY & DUMMY & Maud  & Maud;
+            elsif col_count = 1960 then   data(35 downto 0) <= DUMMY & Maud  & DUMMY & Maud;
             else                          data(35 downto 0) <= DUMMY & DUMMY & DUMMY & DUMMY; 
             end if;
+            
+            ----------------------------------
+            -- When to update the active_line,
+            -- use to set VB-ID field after 
+            -- te BS symbols and control
+            -- emitting pixels 
+            ----------------------------------
+            if col_count = 1956 then 
+                if line_count = max_active_line then
+                    active_line <= '0';
+                end if;
+            end if; 
+                
+            if col_count = max_col_count then 
+                if line_count = max_line_count then
+                    active_line <= '1';
+                end if;               
+            end if; 
+
             
             ----------------------------------
             -- Update the counters 

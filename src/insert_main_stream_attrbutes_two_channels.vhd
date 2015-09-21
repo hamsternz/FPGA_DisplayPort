@@ -143,27 +143,35 @@ process(clk)
                 when "00010" => NULL; -- reserved for VB-ID, Maud, Mvid
                 when "00011" => NULL; -- reserved for VB-ID, Maud, Mvid
                 when "00100" => out_data(17 downto  0) <= SS & SS; 
-                                out_data(35 downto 18) <= SS & SS;
                 when "00101" => out_data(17 downto  0) <= "0" & M_value(15 downto 8)            & "0" & M_value(23 downto 16);
-                                out_data(35 downto 18) <= "0" & M_value(15 downto 8)            & "0" & M_value(23 downto 16);
                 when "00110" => out_data(17 downto  0) <= "0" & "0000" & H_total(11 downto 8)   & "0" & M_value( 7 downto  0);
-                                out_data(35 downto 18) <= "0" & "0000" & H_Start(11 downto 8)   & "0" & M_value( 7 downto  0);
                 when "00111" => out_data(17 downto  0) <= "0" & "0000" & V_total(11 downto 8)   & "0" & H_total( 7 downto 0);
-                                out_data(35 downto 18) <= "0" & "0000" & V_start(11 downto 8)   & "0" & H_start( 7 downto 0);
                 when "01000" => out_data(17 downto  0) <= "0" & H_vsync_active_high & "000" & H_sync_width(11 downto 8) & "0" & V_total( 7 downto 0);
-                                out_data(35 downto 18) <= "0" & V_vsync_active_high & "000" & V_sync_width(11 downto 8) & "0" & V_start( 7 downto 0);
                 when "01001" => out_data(17 downto  0) <= "0" & M_value(23 downto 16)           & "0" & H_sync_width(7 downto 0);
-                                out_data(35 downto 18) <= "0" & M_value(23 downto 16)           & "0" & V_sync_width(7 downto 0);
                 when "01010" => out_data(17 downto  0) <= "0" & M_value( 7 downto 0)            & "0" & M_value(15 downto  8);
-                                out_data(35 downto 18) <= "0" & M_value( 7 downto 0)            & "0" & M_value(15 downto  8);
                 when "01011" => out_data(17 downto  0) <= "0" & H_visible( 7 downto 0)          & "0" & "0000" & H_visible(11 downto 8);
-                                out_data(35 downto 18) <= "0" & N_value(15 downto  8)           & "0" & N_value(23 downto 16); 
                 when "01100" => out_data(17 downto  0) <= "0" & V_visible( 7 downto 0)          & "0" & "0000" & V_visible(11 downto 8);
-                                out_data(35 downto 18) <= "0" & Misc0                           & "0" & N_value( 7 downto  0);
                 when "01101" => out_data(17 downto  0) <= "0" & "00000000"                      & "0" & "00000000";
-                                out_data(35 downto 18) <= "0" & "00000000"                      & "0" & Misc1; 
                 when "01110" => out_data(17 downto  0) <= "0" & "00000000"                      & SE;
-                                out_data(35 downto 18) <= "0" & "00000000"                      & SE;
+                when others  => NULL; 
+            end case;
+
+            case count is
+                when "00000" => NULL; -- while waiting for BS symbol
+                when "00001" => NULL; -- reserved for VB-ID, Maud, Mvid 
+                when "00010" => NULL; -- reserved for VB-ID, Maud, Mvid
+                when "00011" => NULL; -- reserved for VB-ID, Maud, Mvid
+                when "00100" => out_data(35 downto 18) <= SS & SS;
+                when "00101" => out_data(35 downto 18) <= "0" & M_value(15 downto 8)            & "0" & M_value(23 downto 16);
+                when "00110" => out_data(35 downto 18) <= "0" & "0000" & H_Start(11 downto 8)   & "0" & M_value( 7 downto  0);
+                when "00111" => out_data(35 downto 18) <= "0" & "0000" & V_start(11 downto 8)   & "0" & H_start( 7 downto 0);
+                when "01000" => out_data(35 downto 18) <= "0" & V_vsync_active_high & "000" & V_sync_width(11 downto 8) & "0" & V_start( 7 downto 0);
+                when "01001" => out_data(35 downto 18) <= "0" & M_value(23 downto 16)           & "0" & V_sync_width(7 downto 0);
+                when "01010" => out_data(35 downto 18) <= "0" & M_value( 7 downto 0)            & "0" & M_value(15 downto  8);
+                when "01011" => out_data(35 downto 18) <= "0" & N_value(15 downto  8)           & "0" & N_value(23 downto 16); 
+                when "01100" => out_data(35 downto 18) <= "0" & Misc0                           & "0" & N_value( 7 downto  0);
+                when "01101" => out_data(35 downto 18) <= "0" & "00000000"                      & "0" & Misc1; 
+                when "01110" => out_data(35 downto 18) <= "0" & "00000000"                      & SE;
                 when others  => NULL; 
             end case;
                 
@@ -210,7 +218,7 @@ process(clk)
                 if in_data(9) = '1' then
                     if armed = '1' then
                         count <= "00001";
-                        armed <= active;
+                        armed <= '0';
                     end if;
                 else
                     -- Not in the Vblank. so arm the trigger to send the MSA 

@@ -212,7 +212,7 @@ process(clk)
                 if in_data(9) = '1' then
                     if armed = '1' then
                         count <= "00001";
-                        armed <= active;
+                        armed <= '0';
                     end if;
                 else
                     -- Not in the Vblank. so arm the trigger to send the MSA 
