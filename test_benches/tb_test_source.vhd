@@ -201,7 +201,7 @@ i_insert_main_stream_attrbutes_one_channel: insert_main_stream_attrbutes_one_cha
             H_sync_width         => x"080",  -- 128
             V_sync_width         => x"004",   -- 4
             H_start              => x"0D8",  -- 216 
-            V_start              => x"01b",  -- 37
+            V_start              => x"01b",  -- 27
             H_vsync_active_high  => '0',
             V_vsync_active_high  => '0',
             flag_sync_clock      => '1',
