@@ -128,8 +128,8 @@ process(clk)
     begin
         if rising_edge(clk) then
            -- Move the dalay line along 
-           delay_line(1 to 7)    <= delay_line(0 to 6);
-           delay_line_fn(1 to 7) <= delay_line_fn(0 to 6);
+           delay_line(1 to 8)    <= delay_line(0 to 7);
+           delay_line_fn(1 to 8) <= delay_line_fn(0 to 7);
            delay_line(0)         <= in_data;
            delay_line_fn(0)      <= (others => '0');
 

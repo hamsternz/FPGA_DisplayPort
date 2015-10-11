@@ -181,7 +181,7 @@ process(mgmt_clk)
             end if;
 
             -----------------------------------------------
-            -- Receive the channel adjsutment request 
+            -- Receive the channel adjustment request 
             -----------------------------------------------
             if adjust_de = '1' then
                 case addr is 

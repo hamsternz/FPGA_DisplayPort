@@ -129,6 +129,42 @@ architecture arch of test_source_3840_2160_YCC_422_ch2 is
 
 begin
 
+    ------------------------------------------------------------------
+    -- The M number here is almost magic. Here's how to calculate it.
+    --
+    -- The pixel clock is 265MHz, or 53/54 of the DisplayPort's 270MHz
+    -- symbol rate. As I am using YCC 422 53 pixels are being sent 
+    -- every 54 cycles, allowing a constant TU size of 54 symbols with
+    -- one FE symbol for padding.
+    --
+    -- So you should expect M to be 53/54 * 0x80000 = 0x07DA12.
+    -- 
+    -- And you will be wrong. Bash your head against the wall for a 
+    -- week wrong.
+    --  
+    -- Here's the right way. A line is sent every 2054 cycles of the
+    -- 135 MHz clock, or 4108 link symbols. Each line is 4032 pixel  
+    -- clocks (at 265 MHz). So the M value should be 4032/4108*0x80000
+    -- = 514588.4 = 0x07DA1C. 
+    --
+    -- That small difference is enough to make things not work. 
+    --
+    -- So why the difference? It's because line length (4032) doesn't 
+    -- divide evenly by 53. To get this bang-on you would need to add
+    -- an extra 13 symbols every 52 lines, and as it needs to transmit 
+    -- two symbols per cycle this would be awkward. 
+    --
+    -- However the second way gives actual pixel clock is 4032/4108*270 
+    -- 265.004,868 MHz.
+    --
+    -- 
+    -- The upside of this scheme is that an accurate Mvid[7:0] value 
+    -- followingthe BS and VB_ID be constant for all raster lines. So 
+    -- you can use any legal value you like.
+    --
+    -- The downside is that you have to drive your pixel generator from
+    -- the transceiver's reference clock.
+    --------------------------------------------------------------------
     M_value              <= x"07DA1C"; -- For 265MHz/270Mhz
     N_value              <= x"080000";
 

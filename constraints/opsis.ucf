@@ -1,0 +1,40 @@
+NET "GCLK"                 LOC="AB13" |IOSTANDARD="LVCMOS33";
+NET "GCLK27"               LOC="N19" |IOSTANDARD="LVCMOS33";
+
+### To fix programmer port
+NET "g22"                  LOC="g22" |IOSTANDARD="LVCMOS33";
+NET "debug[0]"             LOC="T7"       |IOSTANDARD = "LVCMOS33";
+NET "debug[1]"             LOC="Y7"       |IOSTANDARD = "LVCMOS33";
+
+# FXO-LC73 - component U27
+#NET "refclk0_p"            LOC =    "A10";#       |IOSTANDARD =         LVDS_33;      #                      (/FPGA_Bank_0_3/MGT135MHz_P | Net-(C248-Pad2))
+#NET "refclk0_n"            LOC =    "B10";#       |IOSTANDARD =         LVDS_33;      #                      (/FPGA_Bank_0_3/MGT135MHz_N | Net-(C247-Pad2))
+#NET "refclk1_p"            LOC =    "C11";#       |IOSTANDARD =         LVDS_33;      #                      (/FPGA_Bank_0_3/MGT135MHz_P | Net-(C248-Pad2))
+#NET "refclk1_n"            LOC =    "D11";#       |IOSTANDARD =         LVDS_33;      #                      (/FPGA_Bank_0_3/MGT135MHz_N | Net-(C247-Pad2))
+#NET "refclk2_p"            LOC =    "A12";#       |IOSTANDARD =         LVDS_33;      #                      (/FPGA_Bank_0_3/MGT135MHz_P | Net-(C248-Pad2))
+#NET "refclk2_n"            LOC =    "B12";#       |IOSTANDARD =         LVDS_33;      #                      (/FPGA_Bank_0_3/MGT135MHz_N | Net-(C247-Pad2))
+#### Actually has the reference clock on it
+#NET "refclk3_p"            LOC =    "E12";#       |IOSTANDARD =         LVDS_33;      #                      (/FPGA_Bank_0_3/MGT135MHz_P | Net-(C248-Pad2))
+#NET "refclk3_n"            LOC =    "F12";#       |IOSTANDARD =         LVDS_33;      #                      (/FPGA_Bank_0_3/MGT135MHz_N | Net-(C247-Pad2))
+# \/ Weakly pulled (1M) to GND via R42
+# NET "dp_j8_config1"        LOC =    "V20"       |IOSTANDARD =        LVCMOS33;     #                      (/DisplayPort/DPTXCONFIG1)
+# \/ Weakly pulled (5M) to GND via R43
+# NET "dp_j8_config2"        LOC =   "AB19"       |IOSTANDARD =        LVCMOS33;     #                      (/DisplayPort/DPTXCONFIG2)
+NET "aux_j8_aux_tx_p"  LOC =    "T15"       |IOSTANDARD =         "LVDS_33";     #                      (/DisplayPort/DPTXAUXCH_P)
+NET "aux_j8_aux_tx_n"  LOC =    "U15"       |IOSTANDARD =         "LVDS_33";     #                      (/DisplayPort/DPTXAUXCH_N)
+#NET "aux_j8_aux_rx_p"  LOC =    "U16"       |IOSTANDARD =         "LVDS_33";     #                      (/DisplayPort/DPTXAUXCH_P)
+#NET "aux_j8_aux_rx_p"  LOC =    "V15"       |IOSTANDARD =         "LVDS_33";     #                      (/DisplayPort/DPTXAUXCH_N)
+# \/ Weakly pulled (100k) to GND via R44
+NET "hpd_j8"               LOC =    "V11"       |IOSTANDARD =        LVCMOS33;     #                      (/FPGA_Bank_1_2/DPTXHPD)
+# DISPLAY_PORT - connector J8 - Direction TX
+NET "lnk_j8_lane_p[0]"     LOC =     "B6"       |IOSTANDARD =         LVDS_25;     #                      (/DisplayPort/DPTX_LANEP0)
+NET "lnk_j8_lane_n[0]"     LOC =     "A6"       |IOSTANDARD =         LVDS_25;     #                      (/DisplayPort/DPTX_LANEN0)
+NET "lnk_j8_lane_p[1]"     LOC =     "B8"       |IOSTANDARD =         LVDS_25;     #                      (/DisplayPort/DPTX_LANEP1)
+NET "lnk_j8_lane_n[1]"     LOC =     "A8"       |IOSTANDARD =         LVDS_25;     #                      (/DisplayPort/DPTX_LANEN1)
+#NET "lnk_j8_lane_p[2]"     LOC =    "B14"       |IOSTANDARD =         LVDS_25;     #                      (/DisplayPort/DPTX_LANEP2)
+#NET "lnk_j8_lane_n[2]"     LOC =    "A14"       |IOSTANDARD =         LVDS_25;     #                      (/DisplayPort/DPTX_LANEN2)
+#NET "lnk_j8_lane_p[3]"     LOC =    "B16"       |IOSTANDARD =         LVDS_25;     #                      (/DisplayPort/DPTX_LANEP3)
+#NET "lnk_j8_lane_n[3]"     LOC =    "A16"       |IOSTANDARD =         LVDS_25;     #                      (/DisplayPort/DPTX_LANEN3)
+#Created by Constraints Editor (xc6slx45t-fgg484-3) - 2015/10/08
+NET "gclk" TNM_NET = gclk;
+TIMESPEC TS_gclk = PERIOD "gclk" 10 ns HIGH 50%;

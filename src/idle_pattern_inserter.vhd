@@ -162,7 +162,7 @@ process(clk)
 
             idle_count <= idle_count + 2;            
             -------------------------------------------------------  
-            -- Sync with thr BS stream of the input signal but only 
+            -- Sync with thE BS stream of the input signal but only 
             -- if we are switched over to it (indicated by the high
             -- bit of count_to_switch being set)
             -------------------------------------------------------  

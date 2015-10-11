@@ -69,3 +69,9 @@ set_property -dict {PACKAGE_PIN M17 IOSTANDARD LVCMOS25} [get_ports {switches[7]
 create_clock -period 7.407 -name i_tx0/TXOUTCLK -waveform {0.000 3.704} [get_pins {i_tx0/g_tx[0].gtpe2_i/TXOUTCLK}]
 create_clock -period 7.407 -name {i_tx0/g_tx[1].gtpe2_i_n_39} -waveform {0.000 3.704} [get_pins {i_tx0/g_tx[1].gtpe2_i/TXOUTCLKFABRIC}]
 create_clock -period 7.407 -name i_tx0/ref_clk -waveform {0.000 3.704} [get_pins {i_tx0/g_tx[0].gtpe2_i/TXOUTCLKFABRIC}]
+
+
+create_clock -period 7.407 -name i_tx0/PLL0CLK -waveform {0.000 3.704} [get_pins i_tx0/gtpe2_common_i/PLL0OUTCLK]
+create_clock -period 7.407 -name i_tx0/PLL1CLK -waveform {0.000 3.704} [get_pins i_tx0/gtpe2_common_i/PLL1OUTCLK]
+create_clock -period 7.407 -name refclk0_p -waveform {0.000 3.704} [get_ports refclk0_p]
+create_clock -period 7.407 -name refclk1_p -waveform {0.000 3.704} [get_ports refclk1_p]

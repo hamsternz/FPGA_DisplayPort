@@ -124,8 +124,10 @@ architecture arch of aux_channel is
     signal state            : t_state               := error;
     signal next_state       : t_state               := error;
     signal state_on_success : t_state               := error;
-    signal pulse_per_second : std_logic             := '0';
-	signal pps_count        : unsigned(26 downto 0) := (9=>'1',others => '0');   
+    signal retry_now : std_logic             := '0';
+	signal retry_count        : unsigned(26 downto 0) := (9=>'1',others => '0');   
+    signal link_check_now : std_logic             := '0';
+ 	signal link_check_count        : unsigned(26 downto 0) := (9=>'1',others => '0');   
     signal count_100us      : unsigned(14 downto 0) := to_unsigned(1000,15);
     component dp_aux_messages is
 	port ( clk          : in  std_logic;
@@ -140,6 +142,9 @@ architecture arch of aux_channel is
 	end component;
 
 	component aux_interface is
+        generic (
+            add_buffer_for_dp_rx_aux  : std_logic := '1'
+        );
         port ( 
            clk          : in    std_logic;
 		   debug_pmod   : out   std_logic_vector(7 downto 0);
@@ -207,7 +212,9 @@ i_aux_messages: dp_aux_messages port map (
 		   aux_tx_data  => aux_tx_data
 		 );
 
-i_channel: aux_interface port map ( 
+i_channel: aux_interface generic map (
+        add_buffer_for_dp_rx_aux => '1' 
+    ) port map ( 
 		   clk         => clk,
 		   debug_pmod  => debug_pmod_i, 
 		   ------------------------------
@@ -235,6 +242,7 @@ clk_proc: process(clK)
 		    -- Are we going to change state this cycle?
 		    -------------------------------------------
             msg_de <= '0';
+             
             if next_state /= state then
                 -------------------------------------------------------------
                 -- Get ready to count how many reply bytes have been received
@@ -353,7 +361,7 @@ clk_proc: process(clK)
                 -- expected back, and where it will be routed
                 --
                 -- NOTE: If you set 'expected' incorrectly then bytes will
-                --       get left in the RX FIFO, corrupting things
+                --       get left in the RX FIFO, potentially corrupting things
                 ------------------------------------------------------------
                 msg_de           <= '1';
                 status_de_active <= '0';
@@ -559,7 +567,9 @@ clk_proc: process(clK)
             -- Manage the AUX channel timeout and the retry to  
             -- establish a link. 
             -------------------------------------------------------------                            
-            if channel_timeout = '1' or (state /= reset and state /= link_established and pulse_per_second = '1') then
+--            if channel_timeout = '1' or (state /= reset and state /= link_established and retry_now = '1') then
+            if channel_timeout = '1' or (state /= reset      and state /= link_established and 
+			 	                             state /= check_link and  state /= check_wait      and retry_now = '1') then
                 next_state <= reset;
                 state      <= error;
             end if;
@@ -568,8 +578,8 @@ clk_proc: process(clK)
             -- If the link was established, then every 
             -- now and then check the state of the link  
             -------------------------------------------------
-            if state = link_established and pulse_per_second = '1' then
-                next_state <= check_link;
+            if state = link_established and link_check_now = '1' then
+                next_state <= check_link;  
             end if;
 
             -------------------------------------------------
@@ -589,13 +599,20 @@ clk_proc: process(clK)
             -----------------------------------------
             -- Manage the reset timer
             -----------------------------------------
-			if pps_count = 0 then
-			  pulse_per_second <= '1';
-			  -- PPS actually became a 2Hz pulse....
-			  pps_count        <= to_unsigned(49999999,27);
+			if retry_count = 0 then
+			  retry_now   <= '1';
+			  retry_count <= to_unsigned(49999999,27);
 			else
-			  pulse_per_second <= '0';
-			  pps_count        <= pps_count - 1;
+			  retry_now   <= '0';
+			  retry_count <= retry_count - 1;
+			end if;
+			if link_check_count = 0 then
+			  link_check_now   <= '1';
+			  -- PPS actually became a 2Hz pulse....
+			  link_check_count <= to_unsigned(99999999,27);
+			else
+			  link_check_now   <= '0';
+			  link_check_count <= link_check_count - 1;
 			end if;
 		end if;		
 	end process;
