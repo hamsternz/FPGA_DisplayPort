@@ -62,9 +62,6 @@ Library UNISIM;
 use UNISIM.vcomponents.all;
 
 entity aux_interface is
-    generic (
-        add_buffer_for_dp_rx_aux  : std_logic := '1'
-        );
     port ( 
        clk          : in    std_logic;
        debug_pmod   : out   std_logic_vector(7 downto 0);
@@ -466,13 +463,8 @@ rx_proc: process(clk)
             end if;
         end if;
     end process;
---------------------------------------
---
+    
 -- Stub off the unused inputs
--- Required for Nexys Videoo
-----------------------------------------
-g1: if add_buffer_for_dp_rx_aux = '1' generate     
-
 i_IOBUFDS_1 : IOBUFDS
       generic map (
          DIFF_TERM => FALSE,
@@ -486,6 +478,5 @@ i_IOBUFDS_1 : IOBUFDS
          I   => '0',
          T   => '1'
       );
-end generate;
 
 end architecture;

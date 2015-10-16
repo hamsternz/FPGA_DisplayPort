@@ -55,7 +55,7 @@ use IEEE.STD_LOGIC_1164.ALL;
 entity link_signal_mgmt is
     Port ( mgmt_clk    : in  STD_LOGIC;
 
-           tx_powerup  : in  STD_LOGIC;  -- Used to reset drive parameters too!
+           tx_powerup  : in  STD_LOGIC;  -- Falling edge is used used as a reset too!
         
            status_de   : in  std_logic;
            adjust_de   : in  std_logic;

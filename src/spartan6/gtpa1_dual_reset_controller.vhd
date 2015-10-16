@@ -42,8 +42,9 @@ entity gtpa1_dual_reset_controller is
 end gtpa1_dual_reset_controller;
 
 architecture Behavioral of gtpa1_dual_reset_controller is
+   -- Next two are set to none-zero values to speed up simulation
    signal count_pll     : unsigned(15 downto 0) := (6=>'0',others => '1');
-   signal count_channel : unsigned(41 downto 0) := (6=>'0',others => '1');
+   signal count_channel : unsigned(15 downto 0) := (6=>'0',others => '1'); -- enough for 120us @ 100MHz 
    signal pll_state     : std_logic_vector(1 downto 0) := (others => '0');
    signal channel_state : std_logic_vector(1 downto 0) := (others => '0');
    signal gtpreset_for_pll : std_logic;

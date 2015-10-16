@@ -58,74 +58,51 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.NUMERIC_STD.ALL;
 
-entity test_source_3840_2160_YCC_422_ch2 is
+entity colour_bars_3840 is
     port ( 
-        -----------------------------------------------------
-        -- The MSA values (some are range reduced and could 
-        -- be 16 bits ins size)
-        -----------------------------------------------------      
-        M_value              : out std_logic_vector(23 downto 0);
-        N_value              : out std_logic_vector(23 downto 0);
-        H_visible            : out std_logic_vector(11 downto 0);
-        V_visible            : out std_logic_vector(11 downto 0);
-        H_total              : out std_logic_vector(11 downto 0);
-        V_total              : out std_logic_vector(11 downto 0);
-        H_sync_width         : out std_logic_vector(11 downto 0);
-        V_sync_width         : out std_logic_vector(11 downto 0);
-        H_start              : out std_logic_vector(11 downto 0);
-        V_start              : out std_logic_vector(11 downto 0);
-        H_vsync_active_high  : out std_logic;
-        V_vsync_active_high  : out std_logic;
-        flag_sync_clock      : out std_logic;
-        flag_YCCnRGB         : out std_logic;
-        flag_422n444         : out std_logic;
-        flag_YCC_colour_709  : out std_logic;
-        flag_range_reduced   : out std_logic;
-        flag_interlaced_even : out std_logic;
-        flags_3d_Indicators  : out std_logic_vector(1 downto 0);
-        bits_per_colour      : out std_logic_vector(4 downto 0);
-        stream_channel_count : out std_logic_vector(2 downto 0);
-            
-        clk    : in  std_logic;
-        ready  : out std_logic;
-        data   : out std_logic_vector(72 downto 0) := (others => '0')
+        clk         : in std_logic;
+        new_frame   : in std_logic;
+        next_pixels : in std_logic;
+        y0          : out std_logic(7 downto 0);
+        y1          : out std_logic(7 downto 0);
+        cb          : out std_logic(7 downto 0);
+        cr          : out std_logic(7 downto 0));
     );
 end test_source_3840_2160_YCC_422_ch2;
 
-architecture arch of test_source_3840_2160_YCC_422_ch2 is 
-    type a_test_data_blocks is array (0 to 64*18-1) of std_logic_vector(8 downto 0);
-    
-    constant DUMMY  : std_logic_vector(8 downto 0) := "000000011";   -- 0xAA
-    constant ZERO   : std_logic_vector(8 downto 0) := "000000000";   -- 0x00
-    constant PIX_Y0 : std_logic_vector(8 downto 0) := "010000000";   -- 0xC0
-    constant PIX_Y1 : std_logic_vector(8 downto 0) := "010000000";   -- 0xC0
-    constant PIX_Cb : std_logic_vector(8 downto 0) := "010000000";   -- 0x80
-    constant PIX_Cr : std_logic_vector(8 downto 0) := "010000000";   -- 0x80
+architecture arch of colour_bars_3840 is 
+    constant BAR0_Y : std_logic_vector(8 downto 0)  := "11110000"; 
+    constant BAR0_Cb : std_logic_vector(8 downto 0) := "10000000";
+    constant BAR0_Cr : std_logic_vector(8 downto 0) := "10000000";
 
-    constant SS     : std_logic_vector(8 downto 0) := "101011100";   -- K28.2
-    constant SE     : std_logic_vector(8 downto 0) := "111111101";   -- K29.7
-    constant BE     : std_logic_vector(8 downto 0) := "111111011";   -- K27.7
-    constant BS     : std_logic_vector(8 downto 0) := "110111100";   -- K28.5
-    constant SR     : std_logic_vector(8 downto 0) := "100011100";   -- K28.0
-    constant FS     : std_logic_vector(8 downto 0) := "111111110";   -- K30.7
-    constant FE     : std_logic_vector(8 downto 0) := "111110111";   -- K23.7
+    constant BAR1_Y0 : std_logic_vector(8 downto 0) := "111000000";   -- 0xC0
+    constant BAR1_Y1 : std_logic_vector(8 downto 0) := "010000000";   -- 0xC0
+    constant BAR1_Cb : std_logic_vector(8 downto 0) := "010000000";   -- 0x80
+    constant BAR1_Cr : std_logic_vector(8 downto 0) := "010000000";   -- 0x80
 
-    constant VB_VS  : std_logic_vector(8 downto 0) := "000000001";   -- 0x00  VB-ID with Vertical blank asserted 
-    constant VB_NVS : std_logic_vector(8 downto 0) := "000000000";   -- 0x00  VB-ID without Vertical blank asserted
-	constant Mvid   : std_logic_vector(8 downto 0) := "000000010";   -- 0x02
-    constant Maud   : std_logic_vector(8 downto 0) := "000000000";   -- 0x00    
+    constant BAR2_Y0 : std_logic_vector(8 downto 0) := "110100000";   -- 0xC0
+    constant BAR2_Y1 : std_logic_vector(8 downto 0) := "010000000";   -- 0xC0
+    constant BAR2_Cb : std_logic_vector(8 downto 0) := "010000000";   -- 0x80
+    constant BAR2_Cr : std_logic_vector(8 downto 0) := "010000000";   -- 0x80
 
-    signal   col_count     : unsigned(11 downto 0) := (others => '0');
-    constant max_col_count : unsigned(11 downto 0) := to_unsigned(2053,12); -- (3840+32+48+112)*270/265-1
-    
-    signal   line_count      : unsigned(11 downto 0) := (others => '0');
-    constant max_line_count  : unsigned(11 downto 0) := to_unsigned(2190,12); -- 2160+5+3+23     -1
-    constant max_active_line : unsigned(11 downto 0) := to_unsigned(2159,12); -- 2160     -1
-    
-    signal block_count  : unsigned(5 downto 0) := (others => '0');
-    signal switch_point : std_logic := '0';
-    signal active_line  : std_logic := '1';
-    signal phase        : std_logic := '0';
+    constant BAR3_Y0 : std_logic_vector(8 downto 0) := "110000000";   -- 0xC0
+    constant BAR3_Cb : std_logic_vector(8 downto 0) := "010000000";   -- 0x80
+    constant BAR3_Cr : std_logic_vector(8 downto 0) := "010000000";   -- 0x80
+
+    constant BAR4_Y0 : std_logic_vector(8 downto 0) := "010000000";   -- 0xC0
+    constant BAR4_Cb : std_logic_vector(8 downto 0) := "010000000";   -- 0x80
+    constant BAR4_Cr : std_logic_vector(8 downto 0) := "010000000";   -- 0x80
+
+    constant BAR5_Y0 : std_logic_vector(8 downto 0) := "010000000";   -- 0xC0
+    constant BAR5_Cb : std_logic_vector(8 downto 0) := "010000000";   -- 0x80
+    constant BAR5_Cr : std_logic_vector(8 downto 0) := "010000000";   -- 0x80
+
+    constant BAR6_Y0 : std_logic_vector(8 downto 0) := "010000000";   -- 0xC0
+    constant BAR6_Cb : std_logic_vector(8 downto 0) := "010000000";   -- 0x80
+    constant BAR6_Cr : std_logic_vector(8 downto 0) := "010000000";   -- 0x80
+
+    signal   col_count     : unsigned(10 downto 0) := (others => '0');
+    constant max_col_count : unsigned(10 downto 0) := to_unsigned(1919,12); -- (3840+32+48+112)*270/265-1
 
 begin
 

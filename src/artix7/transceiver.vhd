@@ -58,6 +58,9 @@ library UNISIM;
 use UNISIM.VComponents.all;
 
 entity Transceiver is
+    generic (
+      use_hw_8b10b_support : std_logic  -- NOT YET IMPLEMENTED
+   );
     Port ( mgmt_clk        : in  STD_LOGIC;
            powerup_channel : in  STD_LOGIC_VECTOR;
 
@@ -79,6 +82,8 @@ entity Transceiver is
 
            symbolclk       : out STD_LOGIC;
            in_symbols      : in  std_logic_vector(79 downto 0);
+
+           debug          : out   std_logic_vector(7     downto 0) := (others => '0');
            
            gtptxp         : out std_logic_vector;
            gtptxn         : out std_logic_vector);

@@ -1,5 +1,5 @@
 ----------------------------------------------------------------------------------
--- Module Name: test_source_800_600_RGB_444 - Behavioral
+-- Module Name: test_source_800_600_RGB_444_colourbars_ch1 - Behavioral
 --
 -- Description: Generate a valid DisplayPort symbol stream for testing. In this
 --              case 800x600 colour bars.   
@@ -53,7 +53,7 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.NUMERIC_STD.ALL;
 
-entity test_source_800_600_RGB_444_ch1 is
+entity test_source_800_600_RGB_444_colourbars_ch1 is
     port ( 
         -----------------------------------------------------
         -- The MSA values (some are range reduced and could 
@@ -85,9 +85,9 @@ entity test_source_800_600_RGB_444_ch1 is
         ready  : out std_logic;
         data   : out std_logic_vector(72 downto 0) := (others => '0')
     );
-end test_source_800_600_RGB_444_ch1;
+end test_source_800_600_RGB_444_colourbars_ch1;
 
-architecture arch of test_source_800_600_RGB_444_ch1 is 
+architecture arch of test_source_800_600_RGB_444_colourbars_ch1 is 
     type a_test_data_blocks is array (0 to 64*18-1) of std_logic_vector(8 downto 0);
     
     constant DUMMY  : std_logic_vector(8 downto 0) := "000000011";   -- 0xAA

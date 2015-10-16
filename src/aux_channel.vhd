@@ -142,9 +142,6 @@ architecture arch of aux_channel is
 	end component;
 
 	component aux_interface is
-        generic (
-            add_buffer_for_dp_rx_aux  : std_logic := '1'
-        );
         port ( 
            clk          : in    std_logic;
 		   debug_pmod   : out   std_logic_vector(7 downto 0);
@@ -212,9 +209,7 @@ i_aux_messages: dp_aux_messages port map (
 		   aux_tx_data  => aux_tx_data
 		 );
 
-i_channel: aux_interface generic map (
-        add_buffer_for_dp_rx_aux => '1' 
-    ) port map ( 
+i_channel: aux_interface port map ( 
 		   clk         => clk,
 		   debug_pmod  => debug_pmod_i, 
 		   ------------------------------
@@ -607,7 +602,7 @@ clk_proc: process(clK)
 			  retry_count <= retry_count - 1;
 			end if;
 			if link_check_count = 0 then
-			  link_check_now   <= '1';
+	--		  link_check_now   <= '1';
 			  -- PPS actually became a 2Hz pulse....
 			  link_check_count <= to_unsigned(99999999,27);
 			else

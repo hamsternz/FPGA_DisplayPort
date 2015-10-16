@@ -60,9 +60,9 @@ library UNISIM;
 use UNISIM.VComponents.all;
 
 entity Transceiver is
+    generic( use_hw_8b10b_support : std_logic := '0');
     Port ( mgmt_clk        : in  STD_LOGIC;
            powerup_channel : in  STD_LOGIC_VECTOR(3 downto 0);
-           gclk27          : in  STD_LOGIC;
            debug           : out std_logic_vector(7 downto 0);
 
            preemp_0p0      : in  STD_LOGIC;
@@ -77,7 +77,7 @@ entity Transceiver is
 
            symbolclk       : out STD_LOGIC;
            in_symbols      : in  std_logic_vector(79 downto 0);
-           
+                      
            gtptxp         : out std_logic_vector(3 downto 0);
            gtptxn         : out std_logic_vector(3 downto 0));
 end transceiver;
@@ -92,19 +92,23 @@ architecture Behavioral of transceiver is
 
     signal txdata_for_tx0  :   std_logic_vector(31 downto 0) := (others => '0');
     signal txchardispmode0 :   std_logic_vector( 3 downto 0) := (others => '0');
-    signal txchardispval0  :   std_logic_vector( 3 downto 0) := (others => '0');
+    signal txchardispval0  :   std_logic_vector( 3 downto 0) := (others => '0'); -- Note Forces negative disparity.
+    signal is_kchar_tx0    :   std_logic_vector( 3 downto 0) := (others => '0');
 
     signal txdata_for_tx1  :   std_logic_vector(31 downto 0) := (others => '0');
     signal txchardispmode1 :   std_logic_vector( 3 downto 0) := (others => '0');
     signal txchardispval1  :   std_logic_vector( 3 downto 0) := (others => '0');
+    signal is_kchar_tx1    :   std_logic_vector( 3 downto 0) := (others => '0');
 
     signal txdata_for_tx2  :   std_logic_vector(31 downto 0) := (others => '0');
     signal txchardispmode2 :   std_logic_vector( 3 downto 0) := (others => '0');
     signal txchardispval2  :   std_logic_vector( 3 downto 0) := (others => '0');
+    signal is_kchar_tx2    :   std_logic_vector( 3 downto 0) := (others => '0');
 
     signal txdata_for_tx3  :   std_logic_vector(31 downto 0) := (others => '0');
     signal txchardispmode3 :   std_logic_vector( 3 downto 0) := (others => '0');
     signal txchardispval3  :   std_logic_vector( 3 downto 0) := (others => '0');
+    signal is_kchar_tx3    :   std_logic_vector( 3 downto 0) := (others => '0');
   
     component gtpa1_dual_reset_controller is
     port ( clk               : in  STD_LOGIC;
@@ -124,8 +128,6 @@ architecture Behavioral of transceiver is
            txpowerdown       : out STD_LOGIC_VECTOR(1 downto 0);
            gtpresetdone      : in  STD_LOGIC);
     end component;
-
-    signal powerdown_channel : STD_LOGIC_VECTOR(3 downto 0);
 
     signal refclk        : std_logic_vector(3 downto 0);
 
@@ -194,8 +196,6 @@ gclk135_buf : BUFG
 
     pll_in_use <= (0=>'1', others => '1');
     
-    powerdown_channel <= not powerup_channel;
-   
     symbolclk    <= txusrclk2_buffered;
     
     preemp_level <= "110" when preemp_6p0 = '1' else   -- +6.0 db from table 3-30 in UG476
@@ -353,8 +353,12 @@ Inst_gtpa1_dual_reset_controller3: gtpa1_dual_reset_controller PORT MAP(
 		gtpresetdone      => gtpresetdone(3) 
 	);
 
-   
+g_soft_8b10b: if use_hw_8b10b_support  = '0' generate 
+    ---------------------------------------------------
+    -- Data mapping when the input is raw binary values 
+    ---------------------------------------------------
     -- First channel
+    ---------------------------------------------------
     txdata_for_tx0( 0) <= in_symbols( 9);
     txdata_for_tx0( 1) <= in_symbols( 8);
     txdata_for_tx0( 2) <= in_symbols( 7);
@@ -376,8 +380,10 @@ Inst_gtpa1_dual_reset_controller3: gtpa1_dual_reset_controller PORT MAP(
     txdata_for_tx0(15) <= in_symbols(12);
     txchardispval0 (1) <= in_symbols(11);
     txchardispmode0(1) <= in_symbols(10);
-
+    
+    ---------------------------------------------------
     -- Second channel
+    ---------------------------------------------------
     txdata_for_tx1( 0) <= in_symbols(29);
     txdata_for_tx1( 1) <= in_symbols(28);
     txdata_for_tx1( 2) <= in_symbols(27);
@@ -400,7 +406,10 @@ Inst_gtpa1_dual_reset_controller3: gtpa1_dual_reset_controller PORT MAP(
     txchardispval1 (1) <= in_symbols(31);
     txchardispmode1(1) <= in_symbols(30);
 
+    
+    ---------------------------------------------------
     -- Third channel
+    ---------------------------------------------------
     txdata_for_tx2( 0) <= in_symbols(49);
     txdata_for_tx2( 1) <= in_symbols(48);
     txdata_for_tx2( 2) <= in_symbols(47);
@@ -422,8 +431,10 @@ Inst_gtpa1_dual_reset_controller3: gtpa1_dual_reset_controller PORT MAP(
     txdata_for_tx2(15) <= in_symbols(52);
     txchardispval2 (1) <= in_symbols(51);
     txchardispmode2(1) <= in_symbols(50);
-
-    -- Fourth channel
+    
+    -------------------------------------
+    -- Fourth channel    
+    -------------------------------------
     txdata_for_tx3( 0) <= in_symbols(69);
     txdata_for_tx3( 1) <= in_symbols(68);
     txdata_for_tx3( 2) <= in_symbols(67);
@@ -445,6 +456,50 @@ Inst_gtpa1_dual_reset_controller3: gtpa1_dual_reset_controller PORT MAP(
     txdata_for_tx3(15) <= in_symbols(72);
     txchardispval3 (1) <= in_symbols(71);
     txchardispmode3(1) <= in_symbols(70);
+end generate;
+
+g_hard_8b10b: if use_hw_8b10b_support  = '1' generate  
+    ---------------------------------------------------
+    -- Data mapping when the input is raw binary values 
+    ---------------------------------------------------
+    -- First channel
+    txdata_for_tx0( 7 downto 0) <= in_symbols( 7 downto 0);
+    is_kchar_tx0(0)             <= in_symbols( 8);
+    txchardispval0(0)           <= in_symbols( 9);
+    txchardispmode0(0)          <= '0';
+
+    txdata_for_tx0(15 downto 8) <= in_symbols(17 downto 10);
+    is_kchar_tx0(1)             <= in_symbols(18);
+    txchardispval0(1)           <= in_symbols(19);
+    txchardispmode0(1)          <= '0';
+
+    -- Second channel
+    txdata_for_tx1( 7 downto 0) <= in_symbols(27 downto 20);
+    is_kchar_tx1(0)             <= in_symbols(28);
+    txchardispmode1(0)          <= in_symbols(29); --force neg (txchardispval is 0)
+
+    txdata_for_tx1(15 downto 8) <= in_symbols(37 downto 30);
+    is_kchar_tx1(1)             <= in_symbols(38);
+    txchardispmode1(1)          <= in_symbols(39); --force neg (txchardispval is 0)
+
+    -- Third channel
+    txdata_for_tx2( 7 downto 0) <= in_symbols(47 downto 40);
+    is_kchar_tx2(0)             <= in_symbols(48);
+    txchardispmode2(0)          <= in_symbols(49); --force neg (txchardispval is 0)
+
+    txdata_for_tx2(15 downto 8) <= in_symbols(57 downto 50);
+    is_kchar_tx2(1)             <= in_symbols(58);
+    txchardispmode2(1)          <= in_symbols(59); --force neg (txchardispval is 0)
+
+    -- Fourth channel
+    txdata_for_tx3( 7 downto 0) <= in_symbols(67 downto 60);
+    is_kchar_tx3(0)             <= in_symbols(68);
+    txchardispmode3(0)          <= in_symbols(69); --force neg (txchardispval is 0)
+
+    txdata_for_tx3(15 downto 8) <= in_symbols(77 downto 70);
+    is_kchar_tx3(1)             <= in_symbols(78);
+    txchardispmode3(1)          <= in_symbols(79);  --force neg (txchardispval is 0)
+end generate;
 
    ----------------------------- GTPA1_DUAL Instance X0Y0 --------------------------   
    -- This is the driver for Display port channels 3 and 2.
@@ -775,10 +830,14 @@ gtpa1_dual_X0Y0:GTPA1_DUAL
      RXUSRCLK20                      =>      txusrclk2_buffered,
      RXUSRCLK21                      =>      txusrclk2_buffered,
 
+     TXCHARISK0                      =>      is_kchar_tx2,
+     TXCHARISK1                      =>      is_kchar_tx3,
+     TXENC8B10BUSE0                  =>      use_hw_8b10b_support,
+     TXENC8B10BUSE1                  =>      use_hw_8b10b_support,
         ------------------------ Loopback and Powerdown Ports ----------------------
         LOOPBACK0                       =>      (others => '0'),
         LOOPBACK1                       =>      (others => '0'),
-        RXPOWERDOWN0                    =>      "11",
+        RXPOWERDOWN0                    =>      "11", --- Maybe I should tie these low to allow the reset to finish?
         RXPOWERDOWN1                    =>      "11",
         --------------------------------- PLL Ports --------------------------------
         CLKINEAST0                      =>      '0',
@@ -928,10 +987,6 @@ gtpa1_dual_X0Y0:GTPA1_DUAL
         ------------------- Transmit Ports - 8b10b Encoder Control -----------------
         TXBYPASS8B10B0                  =>      "0000",
         TXBYPASS8B10B1                  =>      "0000",
-        TXCHARISK0                      =>      "0000",
-        TXCHARISK1                      =>      "0000",
-        TXENC8B10BUSE0                  =>      '0',
-        TXENC8B10BUSE1                  =>      '0',
         TXKERR0                         =>      open,
         TXKERR1                         =>      open,
         TXRUNDISP0                      =>      open,
@@ -1300,6 +1355,11 @@ gtpa1_dual_X1Y0:GTPA1_DUAL
      RXUSRCLK20                      =>      txusrclk2_buffered,
      RXUSRCLK21                      =>      txusrclk2_buffered,
 
+     TXCHARISK0                      =>      is_kchar_tx0,
+     TXCHARISK1                      =>      is_kchar_tx1,
+     TXENC8B10BUSE0                  =>      use_hw_8b10b_support,
+     TXENC8B10BUSE1                  =>      use_hw_8b10b_support,
+
         ------------------------ Loopback and Powerdown Ports ----------------------
         LOOPBACK0                       =>      (others => '0'),
         LOOPBACK1                       =>      (others => '0'),
@@ -1449,10 +1509,6 @@ gtpa1_dual_X1Y0:GTPA1_DUAL
         ------------------- Transmit Ports - 8b10b Encoder Control -----------------
         TXBYPASS8B10B0                  =>      "0000",
         TXBYPASS8B10B1                  =>      "0000",
-        TXCHARISK0                      =>      "0000",
-        TXCHARISK1                      =>      "0000",
-        TXENC8B10BUSE0                  =>      '0',
-        TXENC8B10BUSE1                  =>      '0',
         TXKERR0                         =>      open,
         TXKERR1                         =>      open,
         TXRUNDISP0                      =>      open,

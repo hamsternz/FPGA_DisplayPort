@@ -1,6 +1,6 @@
 ##Clock Signal
-set_property -dict {PACKAGE_PIN R4 IOSTANDARD LVCMOS33} [get_ports clk]
-create_clock -period 10.000 -name sys_clk_pin -waveform {0.000 5.000} -add [get_ports clk]
+set_property -dict {PACKAGE_PIN R4 IOSTANDARD LVCMOS33} [get_ports clk100]
+create_clock -period 10.000 -name sys_clk_pin -waveform {0.000 5.000} -add [get_ports clk100]
 
 set_property CFGBVS VCCO [current_design]
 
@@ -21,24 +21,24 @@ set_property -dict {PACKAGE_PIN C5} [get_ports {gtptxn[1]}]
 
 
 # DEBUG on JA
-set_property -dict {PACKAGE_PIN AB22 IOSTANDARD LVCMOS33} [get_ports {debug_pmod[0]}]
-set_property -dict {PACKAGE_PIN AB21 IOSTANDARD LVCMOS33} [get_ports {debug_pmod[1]}]
-set_property -dict {PACKAGE_PIN AB20 IOSTANDARD LVCMOS33} [get_ports {debug_pmod[2]}]
-set_property -dict {PACKAGE_PIN AB18 IOSTANDARD LVCMOS33} [get_ports {debug_pmod[3]}]
-set_property -dict {PACKAGE_PIN Y21 IOSTANDARD LVCMOS33} [get_ports {debug_pmod[4]}]
-set_property -dict {PACKAGE_PIN AA21 IOSTANDARD LVCMOS33} [get_ports {debug_pmod[5]}]
-set_property -dict {PACKAGE_PIN AA20 IOSTANDARD LVCMOS33} [get_ports {debug_pmod[6]}]
-set_property -dict {PACKAGE_PIN AA18 IOSTANDARD LVCMOS33} [get_ports {debug_pmod[7]}]
+set_property -dict {PACKAGE_PIN AB22 IOSTANDARD LVCMOS33} [get_ports {debug[0]}]
+set_property -dict {PACKAGE_PIN AB21 IOSTANDARD LVCMOS33} [get_ports {debug[1]}]
+set_property -dict {PACKAGE_PIN AB20 IOSTANDARD LVCMOS33} [get_ports {debug[2]}]
+set_property -dict {PACKAGE_PIN AB18 IOSTANDARD LVCMOS33} [get_ports {debug[3]}]
+set_property -dict {PACKAGE_PIN  Y21 IOSTANDARD LVCMOS33} [get_ports {debug[4]}]
+set_property -dict {PACKAGE_PIN AA21 IOSTANDARD LVCMOS33} [get_ports {debug[5]}]
+set_property -dict {PACKAGE_PIN AA20 IOSTANDARD LVCMOS33} [get_ports {debug[6]}]
+set_property -dict {PACKAGE_PIN AA18 IOSTANDARD LVCMOS33} [get_ports {debug[7]}]
 
 
-set_property -dict {PACKAGE_PIN T14 IOSTANDARD LVCMOS25} [get_ports {leds[0]}]
-set_property -dict {PACKAGE_PIN T15 IOSTANDARD LVCMOS25} [get_ports {leds[1]}]
-set_property -dict {PACKAGE_PIN T16 IOSTANDARD LVCMOS25} [get_ports {leds[2]}]
-set_property -dict {PACKAGE_PIN U16 IOSTANDARD LVCMOS25} [get_ports {leds[3]}]
-set_property -dict {PACKAGE_PIN V15 IOSTANDARD LVCMOS25} [get_ports {leds[4]}]
-set_property -dict {PACKAGE_PIN W16 IOSTANDARD LVCMOS25} [get_ports {leds[5]}]
-set_property -dict {PACKAGE_PIN W15 IOSTANDARD LVCMOS25} [get_ports {leds[6]}]
-set_property -dict {PACKAGE_PIN Y13 IOSTANDARD LVCMOS25} [get_ports {leds[7]}]
+#set_property -dict {PACKAGE_PIN T14 IOSTANDARD LVCMOS25} [get_ports {leds[0]}]
+#set_property -dict {PACKAGE_PIN T15 IOSTANDARD LVCMOS25} [get_ports {leds[1]}]
+#set_property -dict {PACKAGE_PIN T16 IOSTANDARD LVCMOS25} [get_ports {leds[2]}]
+#set_property -dict {PACKAGE_PIN U16 IOSTANDARD LVCMOS25} [get_ports {leds[3]}]
+#set_property -dict {PACKAGE_PIN V15 IOSTANDARD LVCMOS25} [get_ports {leds[4]}]
+#set_property -dict {PACKAGE_PIN W16 IOSTANDARD LVCMOS25} [get_ports {leds[5]}]
+#set_property -dict {PACKAGE_PIN W15 IOSTANDARD LVCMOS25} [get_ports {leds[6]}]
+#set_property -dict {PACKAGE_PIN Y13 IOSTANDARD LVCMOS25} [get_ports {leds[7]}]
 
 
 ## Buttons
@@ -51,14 +51,14 @@ set_property -dict {PACKAGE_PIN Y13 IOSTANDARD LVCMOS25} [get_ports {leds[7]}]
 
 
 ##Switches
-set_property -dict {PACKAGE_PIN E22 IOSTANDARD LVCMOS25} [get_ports {switches[0]}]
-set_property -dict {PACKAGE_PIN F21 IOSTANDARD LVCMOS25} [get_ports {switches[1]}]
-set_property -dict {PACKAGE_PIN G21 IOSTANDARD LVCMOS25} [get_ports {switches[2]}]
-set_property -dict {PACKAGE_PIN G22 IOSTANDARD LVCMOS25} [get_ports {switches[3]}]
-set_property -dict {PACKAGE_PIN H17 IOSTANDARD LVCMOS25} [get_ports {switches[4]}]
-set_property -dict {PACKAGE_PIN J16 IOSTANDARD LVCMOS25} [get_ports {switches[5]}]
-set_property -dict {PACKAGE_PIN K13 IOSTANDARD LVCMOS25} [get_ports {switches[6]}]
-set_property -dict {PACKAGE_PIN M17 IOSTANDARD LVCMOS25} [get_ports {switches[7]}]
+#set_property -dict {PACKAGE_PIN E22 IOSTANDARD LVCMOS25} [get_ports {switches[0]}]
+#set_property -dict {PACKAGE_PIN F21 IOSTANDARD LVCMOS25} [get_ports {switches[1]}]
+#set_property -dict {PACKAGE_PIN G21 IOSTANDARD LVCMOS25} [get_ports {switches[2]}]
+#set_property -dict {PACKAGE_PIN G22 IOSTANDARD LVCMOS25} [get_ports {switches[3]}]
+#set_property -dict {PACKAGE_PIN H17 IOSTANDARD LVCMOS25} [get_ports {switches[4]}]
+#set_property -dict {PACKAGE_PIN J16 IOSTANDARD LVCMOS25} [get_ports {switches[5]}]
+#set_property -dict {PACKAGE_PIN K13 IOSTANDARD LVCMOS25} [get_ports {switches[6]}]
+#set_property -dict {PACKAGE_PIN M17 IOSTANDARD LVCMOS25} [get_ports {switches[7]}]
 
 
 

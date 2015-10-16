@@ -1,6 +1,4 @@
 NET "GCLK"                 LOC="AB13" |IOSTANDARD="LVCMOS33";
-NET "GCLK27"               LOC="N19" |IOSTANDARD="LVCMOS33";
-
 ### To fix programmer port
 NET "g22"                  LOC="g22" |IOSTANDARD="LVCMOS33";
 NET "debug[0]"             LOC="T7"       |IOSTANDARD = "LVCMOS33";
