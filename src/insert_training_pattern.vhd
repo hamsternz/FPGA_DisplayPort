@@ -83,19 +83,18 @@
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
  
-entity training_and_channel_delay is
+entity insert_training_pattern is
     port (
         clk            : in  std_logic;
-        channel_delay  : in  std_logic_vector(1 downto 0);
         clock_train    : in  std_logic;
         align_train    : in  std_logic;
 
-        in_data        : in  std_logic_vector(17 downto 0);
-        out_data       : out std_logic_vector(19 downto 0)  := (others => '0')
+        in_data        : in  std_logic_vector(71 downto 0);
+        out_data       : out std_logic_vector(79 downto 0)  := (others => '0')
     );
-end training_and_channel_delay;
+end insert_training_pattern;
 
-architecture arch of training_and_channel_delay is    
+architecture arch of insert_training_pattern is    
     signal state             : std_logic_vector(3 downto 0)  := "0000";
     signal clock_train_meta  : std_logic := '0';
     signal clock_train_i     : std_logic := '0';
@@ -107,19 +106,25 @@ architecture arch of training_and_channel_delay is
     constant CODE_D11_6    : std_logic_vector(8 downto 0) := "011001011";
     constant CODE_D10_2    : std_logic_vector(8 downto 0) := "001001010";
 
-    type a_delay_line    is array (0 to 8) of std_logic_vector(19 downto 0);
+    constant p0 : std_logic_vector(19 downto 0) := '0' & CODE_D11_6 & '1' & CODE_K28_5;
+    constant p1 : std_logic_vector(19 downto 0) := '0' & CODE_D11_6 & '0' & CODE_K28_5;
+    constant p2 : std_logic_vector(19 downto 0) := '0' & CODE_D10_2 & '0' & CODE_D10_2;
+    constant p3 : std_logic_vector(19 downto 0) := '0' & CODE_D10_2 & '0' & CODE_D10_2;
+    constant p4 : std_logic_vector(19 downto 0) := '0' & CODE_D10_2 & '0' & CODE_D10_2;
+
+    type a_delay_line    is array (0 to 5) of std_logic_vector(79 downto 0);
     signal delay_line    : a_delay_line    := (others => (others => '0'));
  begin
-    with channel_delay select out_data <= delay_line(5) when "00",
-                                          delay_line(6) when "01",     
-                                          delay_line(7) when "10",     
-                                          delay_line(8) when others;
+    out_data <= delay_line(5);
 process(clk)
     begin
         if rising_edge(clk) then
            -- Move the dalay line along 
-           delay_line(1 to 8)    <= delay_line(0 to 7);
-           delay_line(0)         <= '0' & in_data(17 downto 9) & '0' & in_data(8 downto 0);
+           delay_line(1 to 5)    <= delay_line(0 to 4);
+           delay_line(0)         <= '0' & in_data(71 downto 63) & '0' & in_data(62 downto 54)
+                                  & '0' & in_data(53 downto 45) & '0' & in_data(44 downto 36)
+                                  & '0' & in_data(35 downto 27) & '0' & in_data(26 downto 18)
+                                  & '0' & in_data(17 downto  9) & '0' & in_data(8 downto 0);
 
            -- Do we ened to hold at state 1 until valid data has filtered down the delay line?
            if align_train_i = '1' or clock_train_i = '1' then
@@ -130,11 +135,11 @@ process(clk)
             
             -- Do we need to overwrite the data in slot 5 with the sync patterns?
             case state is
-                when x"5"   => state <= x"4"; delay_line(5) <= '0' & CODE_D11_6 & '1' & CODE_K28_5;
-                when x"4"   => state <= x"3"; delay_line(5) <= '0' & CODE_D11_6 & '0' & CODE_K28_5;
-                when x"3"   => state <= x"2"; delay_line(5) <= '0' & CODE_D10_2 & '0' & CODE_D10_2;
-                when x"2"   => state <= x"1"; delay_line(5) <= '0' & CODE_D10_2 & '0' & CODE_D10_2;
-                when x"1"   => state <= x"0"; delay_line(5) <= '0' & CODE_D10_2 & '0' & CODE_D10_2;
+                when x"5"   => state <= x"4"; delay_line(5) <= p0 & p0 & p0 & p0;
+                when x"4"   => state <= x"3"; delay_line(5) <= p1 & p1 & p1 & p1;
+                when x"3"   => state <= x"2"; delay_line(5) <= p2 & p2 & p2 & p2;
+                when x"2"   => state <= x"1"; delay_line(5) <= p3 & p3 & p3 & p3;
+                when x"1"   => state <= x"0"; delay_line(5) <= p4 & p4 & p4 & p4;
                                 if align_train_i = '1' then
                                     state <= x"5";
                                 elsif hold_at_state_one(0) = '1' then

@@ -91,25 +91,40 @@ architecture Behavioral of main_stream_processing is
         );
     end component;
 
-    component training_and_channel_delay is
+    component scrambler_all_channels is
+        port ( 
+            clk        : in  std_logic;
+            bypass0    : in  std_logic;
+            bypass1    : in  std_logic; 
+            in_data    : in  std_logic_vector(71 downto 0);
+            out_data   : out std_logic_vector(71 downto 0)
+        );
+    end component;
+
+    component insert_training_pattern is
     port (
         clk                : in  std_logic;
-        channel_delay      : in  std_logic_vector(1 downto 0);
         clock_train        : in  std_logic;
         align_train        : in  std_logic;
 
-        in_data            : in  std_logic_vector(17 downto 0);
-        out_data           : out std_logic_vector(17 downto 0);
-        out_data0forceneg  : out std_logic;
-        out_data1forceneg  : out std_logic
-    );
+        in_data            : in  std_logic_vector(71 downto 0);
+        out_data           : out std_logic_vector(79 downto 0)
+        );
     end component;
+
+    component skew_channels is
+        port ( 
+            clk      : in  std_logic;
+            in_data  : in  std_logic_vector(79 downto 0);
+            out_data : out std_logic_vector(79 downto 0)
+        );
+    end component;
+    
     
     component data_to_8b10b is
         port ( 
             clk      : in  std_logic;
-            forceneg : in  std_logic_vector(1 downto 0);
-            in_data  : in  std_logic_vector(17 downto 0);
+            in_data  : in  std_logic_vector(19 downto 0);
             out_data : out std_logic_vector(19 downto 0)
         );
     end component;
@@ -117,9 +132,8 @@ architecture Behavioral of main_stream_processing is
     signal signal_data         : std_logic_vector(71 downto 0) := (others => '0');
     signal sr_inserted_data    : std_logic_vector(71 downto 0) := (others => '0');    
     signal scrambled_data      : std_logic_vector(71 downto 0) := (others => '0');
-    signal final_data          : std_logic_vector(71 downto 0) := (others => '0');
-    signal force_parity_neg    : std_logic_vector( 7 downto 0) := (others => '0');
-
+    signal before_skew         : std_logic_vector(79 downto 0) := (others => '0');
+    signal final_data          : std_logic_vector(79 downto 0) := (others => '0');
     constant delay_index : std_logic_vector(7 downto 0) := "11100100"; -- 3,2,1,0 for use as a lookup table in the generate loop
 
 begin
@@ -140,44 +154,43 @@ i_scrambler_reset_inserter: scrambler_reset_inserter
             out_data  => sr_inserted_data
         );
 
-g_per_channel: for i in 0 to 3 generate  -- lnk_j8_lane_p'high
-
-i_scrambler:  scrambler
+i_scrambler:  scrambler_all_channels
         port map ( 
             clk        => symbol_clk,
             bypass0    => '0',
             bypass1    => '0',
-            in_data    => sr_inserted_data(17+i*18 downto 0+i*18),
-            out_data   => scrambled_data(17+i*18 downto 0+i*18)
+            in_data    => sr_inserted_data,
+            out_data   => scrambled_data
         );
 
-i_train_channel: training_and_channel_delay port map (
+i_insert_training_pattern: insert_training_pattern port map (
         clk               => symbol_clk,
-
-        channel_delay     => delay_index(1+i*2 downto 0+i*2),
         clock_train       => tx_clock_train,
         align_train       => tx_align_train, 
-        
-        in_data           => scrambled_data(17+i*18 downto 0+i*18),
-        out_data          => final_data(17+i*18 downto 0+i*18),
-        out_data0forceneg => force_parity_neg(0+i*2),
-        out_data1forceneg => force_parity_neg(1+i*2)
+        -- Adds one bit per symbol - the force_neg parity flag         
+        in_data           => scrambled_data,
+        out_data          => before_skew
     );
 
+i_skew_channels: skew_channels port map (
+        clk               => symbol_clk,
+        in_data           => before_skew,
+        out_data          => final_data
+    );
+
+g_per_channel: for i in 0 to 3 generate  -- lnk_j8_lane_p'high
    ----------------------------------------------
    -- Soft 8b/10b encoder
    ----------------------------------------------
 g2: if use_hw_8b10b_support = '0' generate
 i_data_to_8b10b: data_to_8b10b port map ( 
         clk      => symbol_clk,
-        in_data  => final_data(17+i*18 downto 0+i*18),
-        out_data => tx_symbols(19+i*20 downto 0+i*20),
-        forceneg => force_parity_neg(1+i*2 downto 0+i*2)
-        );
+        in_data  => final_data(19+i*20 downto 0+i*20),
+        out_data => tx_symbols(19+i*20 downto 0+i*20));
     end generate;
+    
 g3: if use_hw_8b10b_support = '1' generate
-      tx_symbols(19+i*20 downto 0+i*20) <= force_parity_neg(1+i*2) & final_data(17+i*18 downto 9+i*18) &
-                                           force_parity_neg(0+i*2) & final_data( 8+i*18 downto 0+i*18);
+      tx_symbols <= final_data;
     end generate;
     end generate;  --- For FOR GENERATE loop
 

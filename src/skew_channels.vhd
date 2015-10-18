@@ -1,8 +1,8 @@
-----------------------------------------------------------------------------------
--- Module Name: tb_test_source - Behavioral
+---------------------------------------------------
+-- Module: skew_channels
 --
--- Description: A testbench for tb_test_source
--- 
+-- Description:  Delay the symbols by the inter-channel skew (2 symbols per channel)
+--
 ----------------------------------------------------------------------------------
 -- FPGA_DisplayPort from https://github.com/hamsternz/FPGA_DisplayPort
 ------------------------------------------------------------------------------------
@@ -45,73 +45,60 @@
 --------------------------------------------------------------------------------------
 --  Ver | Date       | Change
 --------+------------+---------------------------------------------------------------
---  0.1 | 2015-09-17 | Initial Version
+--  0.1 | 2015-10-17 | Initial Version
 ------------------------------------------------------------------------------------
 
+
+
+---------------------------------------------------
+--
+-- This is set up so the change over from test patters
+-- to data happens seamlessly - e.g. the value for 
+-- on data_in when send_patter_1 and send_pattern_2
+-- are both become zero is guarranteed to be sent
+--
+-- +----+--------------------+--------------------+
+-- |Word| Training pattern 1 | Training pattern 2 |
+-- |    | Code  MSB    LSB   | Code   MSB     LSB |
+-- +----+--------------------+-------------------+
+-- |  0 | D10.2 1010101010   | K28.5- 0101111100  |
+-- |  1 | D10.2 1010101010   | D11.6  0110001011  |
+-- |  2 | D10.2 1010101010   | K28.5+ 1010000011  |
+-- |  3 | D10.2 1010101010   | D11.6  0110001011  |
+-- |  4 | D10.2 1010101010   | D10.2  1010101010  |
+-- |  5 | D10.2 1010101010   | D10.2  1010101010  |
+-- |  6 | D10.2 1010101010   | D10.2  1010101010  |
+-- |  7 | D10.2 1010101010   | D10.2  1010101010  |
+-- |  8 | D10.2 1010101010   | D10.2  1010101010  |
+-- |  9 | D10.2 1010101010   | D10.2  1010101010  |
+-- +----+--------------------+--------------------+
+-- Patterns are transmitted LSB first.
+---------------------------------------------------
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.NUMERIC_STD.ALL;
+ 
+entity skew_channels is
+    port (
+        clk            : in  std_logic;
+        in_data        : in  std_logic_vector(79 downto 0);
+        out_data       : out std_logic_vector(79 downto 0)  := (others => '0')
+    );
+end skew_channels;
 
-entity tb_test_source is
-end entity;
-
-architecture arch of tb_test_source is
-    component test_source is
-        port ( 
-            clk    : in  std_logic;
-            ready  : out std_logic;
-            data   : out std_logic_vector(72 downto 0) := (others => '0')
-        );
-    end component;
-
-    COMPONENT main_stream_processing
-        generic( use_hw_8b10b_support : std_logic);
-        PORT(
-           symbol_clk          : IN  std_logic;
-           tx_link_established : IN  std_logic;
-           source_ready        : IN  std_logic;
-           tx_clock_train      : IN  std_logic;
-           tx_align_train      : IN  std_logic;
-           in_data             : IN  std_logic_vector(72 downto 0);          
-           tx_symbols          : OUT std_logic_vector(79 downto 0)
-        );
-    END COMPONENT;
- 	
-	signal clk                       : std_logic;
-
-	signal test_signal_data          : std_logic_vector(72 downto 0);
-    signal test_signal_ready         : std_logic;
-
-    signal tx_symbols                : std_logic_vector(79 downto 0);
-
-	signal tx_link_established       : std_logic;
-	signal  tx_clock_train           : std_logic;
-	signal tx_align_train            : std_logic;
-    constant use_hw_8b10b_support : std_logic := '1'; 
-begin
-i_test_source: test_source port map ( 
-            clk   => clk,
-            ready => test_signal_ready,
-            data  => test_signal_data
-        );
-
-Inst_main_stream_processing: main_stream_processing generic map (
-      use_hw_8b10b_support => use_hw_8b10b_support
-   ) PORT MAP(
-		symbol_clk          => clk,
-		tx_link_established => tx_link_established,
-		source_ready        => test_signal_ready,
-		tx_clock_train      => tx_clock_train,
-		tx_align_train      => tx_align_train,
-		in_data             => test_signal_data,
-		tx_symbols          => tx_symbols
-	);
-
-process 
+architecture arch of skew_channels is    
+    type a_delay_line    is array (0 to 2) of std_logic_vector(79 downto 0);
+    signal delay_line    : a_delay_line    := (others => (others => '0'));
+ begin
+    out_data <= delay_line(2)(79 downto 60) & 
+                delay_line(1)(59 downto 40) &
+                delay_line(0)(39 downto 20) &
+                in_data(19 downto  0);
+process(clk)
     begin
-        clk <= '1';
-        wait for 5 ns;
-        clk <= '0';
-        wait for 5 ns;
+        if rising_edge(clk) then
+           -- Move the dalay line along 
+           delay_line(1 to 2)    <= delay_line(0 to 1);
+           delay_line(0)         <= in_data;
+        end if;
     end process;
 end architecture;

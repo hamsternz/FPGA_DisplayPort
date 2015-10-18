@@ -1,7 +1,7 @@
 ----------------------------------------------------------------------------------
 -- Engineer: Mike Field <hamster@snap.net.nz>
 -- 
--- Module Name: scrambler - Behavioral
+-- Module Name: scrambler_all_channels - Behavioral
 -- Description: A x^16+x^5+x^4+x^3+1 LFSR scxrambler for DisplayPort
 -- 
 --              Scrambler LFSR is reset when a K.28.0 passes through it,
@@ -59,49 +59,36 @@
 --------------------------------------------------------------------------------------
 --  Ver | Date       | Change
 --------+------------+---------------------------------------------------------------
---  0.1 | 2015-09-17 | Initial Version
+--  0.1 | 2015-10-17 | Initial Version
 ------------------------------------------------------------------------------------
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 
-entity scrambler is
+entity scrambler_all_channels is
     Port ( clk        : in  STD_LOGIC;
            bypass0    : in  STD_LOGIC;
            bypass1    : in  STD_LOGIC;
     
            in_data    : in  STD_LOGIC_VECTOR (71 downto 0);
            out_data   : out STD_LOGIC_VECTOR (71 downto 0) := (others => '0'));
-end scrambler;
+end scrambler_all_channels;
 
-architecture Behavioral of scrambler is
+architecture Behavioral of scrambler_all_channels is
+    type a_delay_line is array(0 to 7) of STD_LOGIC_VECTOR (17 downto 0);   
     signal lfsr_state : STD_LOGIC_VECTOR (15 downto 0) := (others => '1');
     constant SR       : STD_LOGIC_VECTOR ( 8 downto 0)  := "100011100"; -- K28.0 ia used to reset the scrambler
+    signal scramble_delay : a_delay_line := (others => (others => '0'));
 begin
 
 process(clk)
     variable s0 : STD_LOGIC_VECTOR (15 downto 0);
     variable s1 : STD_LOGIC_VECTOR (15 downto 0);
+    variable flipping : STD_LOGIC_VECTOR (17 downto 0);
+    
     begin
         if rising_edge(clk) then
             s0 := lfsr_state;
-            --------------------------------------------
-            -- Process symbol 0
-            --------------------------------------------        
-            if in_data(8) = '1' or bypass0 = '1' then
-                -- Bypass the scrambler for 'K' symbols (but still update LFSR state!)
-                out_data(8 downto 0)  <= in_data(8 downto 0);
-            else
-                out_data(0) <= in_data(0) xor s0(15);
-                out_data(1) <= in_data(1) xor s0(14);
-                out_data(2) <= in_data(2) xor s0(13);
-                out_data(3) <= in_data(3) xor s0(12);
-                out_data(4) <= in_data(4) xor s0(11);
-                out_data(5) <= in_data(5) xor s0(10);
-                out_data(6) <= in_data(6) xor s0( 9);
-                out_data(7) <= in_data(7) xor s0( 8);                
-                out_data(8) <= '0';
-            end if; 
 
             -- generate intermediate scrambler state            
             if in_data(8 downto 0) = SR then
@@ -125,25 +112,6 @@ process(clk)
                 s1(15) := s0(7);                
             end if;
     
-            --------------------------------------------
-            -- Process symbol 1
-            --------------------------------------------        
-            if in_data(17) = '1' or bypass1 = '1' then
-                -- Bypass the scrambler for 'K' symbols (but still update LFSR state!)
-                out_data(17 downto 9)  <= in_data(17 downto 9);
-            else
-                -- Scramble symbol 1
-                out_data( 9) <= in_data( 9) xor s1(15);
-                out_data(10) <= in_data(10) xor s1(14);
-                out_data(11) <= in_data(11) xor s1(13);
-                out_data(12) <= in_data(12) xor s1(12);
-                out_data(13) <= in_data(13) xor s1(11);
-                out_data(14) <= in_data(14) xor s1(10);
-                out_data(15) <= in_data(15) xor s1( 9);
-                out_data(16) <= in_data(16) xor s1( 8);                
-                out_data(17) <= '0';
-            end if; 
-
             -- Update scrambler state
             if in_data(17 downto 9) = SR then
                 lfsr_state <= x"FFFF";    
@@ -165,6 +133,26 @@ process(clk)
                 lfsr_state(14) <= s1(6);
                 lfsr_state(15) <= s1(7);                
             end if;
+
+            --------------------------------------------
+            -- Calculate a vector of bits to be flipped
+            --------------------------------------------        
+            if in_data(8) = '0' and bypass0 = '0' then
+                flipping(8 downto 0) := '0' & s0(8) & s0(9) & s0(10) & s0(11) & s0(12) & s0(13) & s0(14) & s0(15);
+            else
+                flipping(8 downto 0) := (others => '0');
+            end if; 
+
+            if in_data(17) = '0' and bypass1 = '0' then
+                flipping(17 downto 9) := '0' & s1(8) & s1(9) & s1(10) & s1(11) & s1(12) & s1(13) & s1(14) & s1(15);
+            else
+                flipping(17 downto 9) := (others => '0');
+            end if; 
+            --------------------------------------------
+            -- Apply vector to channel 0
+            --------------------------------------------        
+            out_data <= in_data xor (flipping & flipping & flipping & flipping );
+            
         end if;
     end process;
 

@@ -64,8 +64,7 @@ use IEEE.NUMERIC_STD.ALL;
 entity data_to_8b10b is
         port ( 
             clk      : in  std_logic;
-            forceneg : in  std_logic_vector(1 downto 0);
-            in_data  : in  std_logic_vector(17 downto 0);
+            in_data  : in  std_logic_vector(19 downto 0);
             out_data : out std_logic_vector(19 downto 0) := (others => '0')
         );
 end entity;
@@ -630,15 +629,20 @@ architecture arch of data_to_8b10b is
         "1000010111", "0111101000",  -- K30.7
         "XXXXXXXXXX", "XXXXXXXXXX"   -- K31.7
         );
-    signal data0  : std_logic_vector(7 downto 0);
-    signal data1  : std_logic_vector(7 downto 0);
-    signal data0k : std_logic;
-    signal data1k : std_logic;
+    signal data0         : std_logic_vector(7 downto 0);
+    signal data1         : std_logic_vector(7 downto 0);
+    signal data0k        : std_logic;
+    signal data1k        : std_logic;
+    signal data0forceneg : std_logic;
+    signal data1forceneg : std_logic;
+
 begin
-    data0  <= in_data(7 downto 0);
-    data0k <= in_data(8);
-    data1  <= in_data(16 downto 9);
-    data1k <= in_data(17);
+    data0         <= in_data(7 downto 0);
+    data0k        <= in_data(8);
+    data0forceneg <= in_data(9);
+    data1         <= in_data(17 downto 10);
+    data1k        <= in_data(18);
+    data1forceneg <= in_data(19);
 process(clk)
     variable index0 : unsigned(8 downto 0);
     variable index1 : unsigned(8 downto 0);
@@ -665,8 +669,8 @@ process(clk)
             -- Stage 2 - work out the disparity for each symbol, and
             -- the disparity for the next set of symbols.
             ----------------------------------------------------------
-            if forceneg(0) = '0' then
-                if forceneg(1) = '0'  then
+            if data0forceneg = '0' then
+                if data1forceneg = '0'  then
                     disparity0_neg_2      <= current_disparity_neg;
                     disparity1_neg_2      <= current_disparity_neg XOR disparity0_odd_1;
                     current_disparity_neg <= current_disparity_neg XOR disparity0_odd_1 XOR disparity1_odd_1;  
@@ -676,7 +680,7 @@ process(clk)
                     current_disparity_neg <= '1' XOR disparity1_odd_1;  
                 end if;     
             else
-                if forceneg(1) = '0'  then
+                if data1forceneg = '0'  then
                     disparity0_neg_2      <= '1';
                     disparity1_neg_2      <= '1' XOR disparity0_odd_1;
                     current_disparity_neg <= '1' XOR disparity0_odd_1 XOR disparity1_odd_1;  
@@ -702,7 +706,7 @@ process(clk)
             end if;
             data0_1          <= data0;
             data0k_1         <= data0k;
-            data0forceneg_1  <= forceneg(0);
+            data0forceneg_1  <= data0forceneg;
 
             if data1k = '1' then                 
                 disparity1_odd_1 <= disparity_k(to_integer(unsigned(data1)));
@@ -711,7 +715,7 @@ process(clk)
             end if;
             data1_1          <= data1;
             data1k_1         <= data1k;
-            data1forceneg_1  <= forceneg(1);
+            data1forceneg_1  <= data1forceneg;
         end if;        
     end process;    
 end architecture;
