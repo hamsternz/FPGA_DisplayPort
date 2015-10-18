@@ -91,10 +91,10 @@ end transceiver;
 
 architecture Behavioral of transceiver is
 
-    signal txchardispmode :   std_logic_vector( 4*gtptxp'length-1 downto 0)  := (others => '0');
-    signal txchardispval  :   std_logic_vector( 4*gtptxp'length-1 downto 0)  := (others => '0');
-    signal txdata_for_tx  :   std_logic_vector( 32*gtptxp'length-1 downto 0) := (others => '0');
-    
+    signal txchardispmode  :   std_logic_vector( 4*gtptxp'length-1 downto 0)  := (others => '0');
+    signal txchardispval   :   std_logic_vector( 4*gtptxp'length-1 downto 0)  := (others => '0');
+    signal txdata_for_tx   :   std_logic_vector( 32*gtptxp'length-1 downto 0) := (others => '0');
+    signal txdata_iskchark :   std_logic_vector( 4*gtptxp'length-1 downto 0)  := (others => '0');
     component gtx_tx_reset_controller is
     port (  clk             : in  std_logic;
             ref_clk         : in  std_logic;
@@ -288,7 +288,7 @@ g_tx: for i in 0 to gtptxp'high generate
     TXUSRCLK(i)       <= tx_out_clk_buffered;
     TXUSRCLK2(i)      <= tx_out_clk_buffered;
 
-   
+g_sw_8b10b: if use_hw_8b10b_support = '0' generate   
     txdata_for_tx(32*i+ 0) <= in_symbols(9+20*i);
     txdata_for_tx(32*i+ 1) <= in_symbols(8+20*i);
     txdata_for_tx(32*i+ 2) <= in_symbols(7+20*i);
@@ -299,6 +299,7 @@ g_tx: for i in 0 to gtptxp'high generate
     txdata_for_tx(32*i+ 7) <= in_symbols(2+20*i);
     txchardispval (4*i+ 0) <= in_symbols(1+20*i);
     txchardispmode(4*i+ 0) <= in_symbols(0+20*i);
+    txdata_iskchark(4*i+0) <= '0'; -- does nothing!
 
     txdata_for_tx(32*i+ 8) <= in_symbols(19+20*i);
     txdata_for_tx(32*i+ 9) <= in_symbols(18+20*i);
@@ -310,6 +311,21 @@ g_tx: for i in 0 to gtptxp'high generate
     txdata_for_tx(32*i+15) <= in_symbols(12+20*i);
     txchardispval (4*i+1)  <= in_symbols(11+20*i);
     txchardispmode(4*i+1)  <= in_symbols(10+20*i);
+    txdata_iskchark(4*i+ 1) <= '0'; -- does nothing!
+    end generate;
+
+
+g_ww_8b10b: if use_hw_8b10b_support = '1' generate   
+        txdata_for_tx(32*i+ 7 downto 32*i+ 0) <= in_symbols(7+20*i downto 0+20*i);
+        txdata_iskchark(4*i+ 0)               <= in_symbols(8+20*i);
+        txchardispval(4*i+ 0)                 <= '0';
+        txchardispmode(4*i+ 0)                <= in_symbols(9+20*i);
+
+        txdata_for_tx(32*i+ 15 downto 32*i+ 8) <= in_symbols(17+20*i downto 10+20*i);
+        txdata_iskchark(4*i+1)                 <= in_symbols(18+20*i);
+        txchardispval(4*i+1)                   <= '0';
+        txchardispmode(4*i+1)                  <= in_symbols(19+20*i);
+    end generate;
 
 i_gtx_tx_reset_controller: gtx_tx_reset_controller
        port map (  clk         => mgmt_clk,
@@ -665,7 +681,7 @@ gtpe2_i : GTPE2_CHANNEL
         RXSYSCLKSEL                =>      "11",
         TXSYSCLKSEL                =>      "00",
         ----------------- FPGA TX Interface Datapath Configuration  ----------------
-        TX8B10BEN                  =>      '0',
+        TX8B10BEN                  =>      use_hw_8b10b_support,
         ------------------------ GTPE2_CHANNEL Clocking Ports ----------------------
         PLL0CLK                    =>      pll0clk,
         PLL0REFCLK                 =>      pll0refclk,
@@ -877,7 +893,7 @@ gtpe2_i : GTPE2_CHANNEL
         TX8B10BBYPASS                   =>      (others => '0'),
         TXCHARDISPMODE                  =>      txchardispmode(3+4*i downto 4*i),
         TXCHARDISPVAL                   =>      txchardispval(3+4*i downto 4*i),
-        TXCHARISK                       =>      (others => '0'),
+        TXCHARISK                       =>      txdata_iskchark(3+4*i downto 4*i),
         ------------------ Transmit Ports - TX Buffer Bypass Ports -----------------
         TXDLYBYPASS                     =>      '1',
         TXDLYEN                         =>      '0',
