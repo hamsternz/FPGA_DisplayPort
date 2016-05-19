@@ -2,7 +2,7 @@
 -- Module Name: test_source_800_600_RGB_444_ch2 - Behavioral
 --
 -- Description: Generate a valid DisplayPort symbol stream for testing. In this
---              case 800x600 colour bars.   
+--              case 800x600 white screen.   
 -- 
 ----------------------------------------------------------------------------------
 -- FPGA_DisplayPort from https://github.com/hamsternz/FPGA_DisplayPort
@@ -105,7 +105,7 @@ architecture arch of test_source_800_600_RGB_444_ch2 is
 
     constant VB_VS  : std_logic_vector(8 downto 0) := "000000001";   -- 0x00  VB-ID with Vertical blank asserted 
     constant VB_NVS : std_logic_vector(8 downto 0) := "000000000";   -- 0x00  VB-ID without Vertical blank asserted
-    constant Mvid   : std_logic_vector(8 downto 0) := "000000010";   -- 0x02
+    constant Mvid   : std_logic_vector(8 downto 0) := "001101000";   -- 0x68
     constant Maud   : std_logic_vector(8 downto 0) := "000000000";   -- 0x00    
     
     constant test_data_blocks : a_test_data_blocks := (

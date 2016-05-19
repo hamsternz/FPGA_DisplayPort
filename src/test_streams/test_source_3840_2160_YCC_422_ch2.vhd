@@ -112,7 +112,7 @@ architecture arch of test_source_3840_2160_YCC_422_ch2 is
 
     constant VB_VS  : std_logic_vector(8 downto 0) := "000000001";   -- 0x00  VB-ID with Vertical blank asserted 
     constant VB_NVS : std_logic_vector(8 downto 0) := "000000000";   -- 0x00  VB-ID without Vertical blank asserted
-	constant Mvid   : std_logic_vector(8 downto 0) := "000000010";   -- 0x02
+    constant Mvid   : std_logic_vector(8 downto 0) := "001101000";   -- 0x68
     constant Maud   : std_logic_vector(8 downto 0) := "000000000";   -- 0x00    
 
     signal   col_count     : unsigned(11 downto 0) := (others => '0');
