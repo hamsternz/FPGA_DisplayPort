@@ -6,7 +6,12 @@ Status
 ======
 Implements a 800x600 display over a one, two or four 2.70Gb/s lanes (depending on actual board's design). It also can display 3840x2160@30Hz YCC 422 over a two-channel interface. There is also a test source to display colourbars over 800x600.
 
-Low-level transceiver blocks are supplied for Artix-7 and Spartan-6 LXT FPGAs. These will need to be revised to work wiht your particular FPGA board's layout.
+Low-level transceiver blocks are supplied for Artix-7 and Spartan-6 LXT FPGAs. These will need to be revised to work with your particular FPGA board's layout.
+
+Thanks
+======
+Greg Overkamp for his help with debugging streams
+Tim Ansell for offering a Spartan 6 board with a DisplayPort interface.
 
 TODO
 ====
